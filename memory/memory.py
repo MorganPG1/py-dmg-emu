@@ -32,7 +32,7 @@ class MemoryRegion():
         Writes data to the MemoryRegion
 
         :param self: The MemoryRegion object
-        :param offset: The base address to begin writing from
+        :param offset: The base address to begin writing to
         :param buffer: The data to write
         :type offset: int
         :type buffer: bytearray
