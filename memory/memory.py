@@ -1,3 +1,10 @@
+'''
+DMG Gameboy Emulator Project - MorganPG
+
+memory/memory.py
+
+Memory-related classes
+'''
 from collections.abc import Iterable
 
 class MemoryRegion():
@@ -5,11 +12,6 @@ class MemoryRegion():
     Base class for a region in memory space
     '''
     def __init__(self) -> None:
-        self.base:int
-        '''The start address of the MemoryRegion'''
-
-        self.size:int
-        '''The size of the MemoryRegion'''
 
         pass
 
@@ -44,14 +46,8 @@ class MemoryController():
     A controller of memory regions\n
     Allows for reading from the entire memory space
     '''
-    def __init__(self, memoryRegions:Iterable[MemoryRegion]) -> None:
-        self.mem_regions:dict[tuple, MemoryRegion] = {}
-
-        for mem_region in memoryRegions:
-            start = mem_region.base
-            end = start + mem_region.size
-    
-            self.mem_regions[(start, end)] = mem_region
+    def __init__(self, memoryMap:dict[tuple[int], MemoryRegion]) -> None:
+        self.mem_regions:dict[tuple, MemoryRegion] = memoryMap
 
         pass
     

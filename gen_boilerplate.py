@@ -1,3 +1,11 @@
+'''
+DMG Gameboy Emulator Project - MorganPG
+
+gen_boilerplate.py:
+
+Basic CPU Instruction Decoder Boilerplate Generator
+This generates a huge match-case based instruction decoder (does not perform the execution of the instructions however)
+'''
 import json
 import datetime
 data:dict = {}
