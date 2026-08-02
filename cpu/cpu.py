@@ -124,6 +124,85 @@ class CPU():
     def pop_int(self) -> int:
         return self.bytearray_to_int(self.pop(2))
 
+    def alu_add(self, a, b) -> int:
+        res = a + b
+
+        z = (res & 0xFF) == 0
+        n = 0
+        h = ((a & 0x0F) + (b & 0x0F)) > 0x0F
+        c = res > 0xFF
+
+        self.flags.set_znhc(z,n,h,c)
+        return res & 0xFF
+
+    def alu_adc(self, a,b) -> int:
+        c_in = self.flags.get_c()
+        res = a+b+c_in
+
+        z = (res & 0xFF) == 0
+        n = 0
+        h = ((a & 0x0F) + (b & 0x0F) + c_in) > 0x0F
+        c = res > 0xFF
+
+        self.flags.set_znhc(z,n,h,c)
+        return res & 0xFF
+
+    def alu_sub(self, a,b) -> int:
+        res = a - b
+
+        z = (res & 0xFF) == 0
+        n = 1
+        h = (a & 0x0F) < (b & 0x0F)
+        c = a < b
+
+        self.flags.set_znhc(z,n,h,c)
+        return res & 0xFF
+
+    def alu_sbc(self, a,b) -> int:
+        c_in = self.flags.get_c()
+        res = a - b - c_in
+
+        z = (res & 0xFF) == 0
+        n = 1
+        h = (a & 0x0F) < ((b & 0x0F) + c_in)
+        c = a < (b + c_in)
+
+        self.flags.set_znhc(z,n,h,c)
+        return res & 0xFF
+
+    def alu_and(self, a,b) -> int:
+        res = a & b
+
+        z = res == 0
+        n = 0
+        h = 1
+        c = 0
+
+        self.flags.set_znhc(z,n,h,c)
+        return res
+    
+    def alu_xor(self, a,b) -> int:
+        res = a ^ b
+
+        z = res == 0
+        n = 0
+        h = 0
+        c = 0
+
+        self.flags.set_znhc(z,n,h,c)
+        return res
+
+    def alu_or(self, a,b) -> int:
+        res = a | b
+
+        z = res == 0
+        n = 0
+        h = 0
+        c = 0
+
+        self.flags.set_znhc(z,n,h,c)
+        return res
+    
     def handle_stop(self, opcode:int, flags:str, cycles:list[int]):
         raise Exception("STOP")
     
@@ -183,8 +262,24 @@ class CPU():
 
         dest.set(val)
         self.cycles += cycles[0]
+    def handle_ldh_imm8_a(self, opcode:int, flags:str, cycles:list[int]):
+        offset = self.read_next(1)[0]
+        addr = 0xFF00+offset
 
+        val = self.registers["A"].get()
+        self.board.memory.write(addr, bytearray([val]))
+
+        self.cycles += cycles[0]
+    def handle_ldh_c_a(self, opcode:int, flags:str, cycles:list[int]):
+        offset = self.registers["C"].get()
+        addr = 0xFF00+offset
+
+        val = self.registers["A"].get()
+        self.board.memory.write(addr, bytearray([val]))
+
+        self.cycles += cycles[0]
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
+        addr = self.read_next(1)[0]
         cond = self.conditionals[(opcode >> 3) & 0b11]
         pc = self.pc
 
@@ -192,7 +287,7 @@ class CPU():
             self.cycles += cycles[1]
             return
 
-        addr = self.bytearray_to_int(self.read_next(2))
+        
         pc.val += addr
         self.cycles += cycles[0]
 
@@ -205,7 +300,7 @@ class CPU():
         else:
             val = operand.get()
             self.push_int(val)
-
+        self.cycles += cycles[0]
     def handle_inc_8b(self, opcode:int, is_dec:bool, flags:str, cycles:list[int]):
         operand = self.registers_8b[(opcode >> 3) & 0b111]
         old = operand.get()
@@ -221,7 +316,7 @@ class CPU():
         n = is_dec
         c = self.flags.get_c()
         self.flags.set_znhc(z,n,h,c)
-
+        self.cycles += cycles[0]
     def handle_alu_8b(self, opcode:int, is_immediate:bool, flags:str, cycles:list[int]):
         acc = self.registers["A"]
         a = acc.get()
@@ -234,22 +329,22 @@ class CPU():
 
         match operation:
             case 0:
-                self.alu_add(a,b)
+                v = self.alu_add(a,b)
             case 1:
-                self.alu_adc(a,b)
+                v = self.alu_adc(a,b)
             case 2:
-                self.alu_sub(a,b)
+                v = self.alu_sub(a,b)
             case 3:
-                self.alu_sbc(a,b)
+                v = self.alu_sbc(a,b)
             case 4:
-                self.alu_and(a,b)
+                v = self.alu_and(a,b)
             case 5:
-                self.alu_xor(a,b)
+                v = self.alu_xor(a,b)
             case 6:
-                self.alu_or(a,b)
+                v = self.alu_or(a,b)
             case 7:
-                self.alu_cp(a,b)
-
+                self.alu_sub(a,b)
+        self.cycles += cycles[0]
     def handle_ret(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         cond = self.conditionals[(opcode >> 3) & 0b11]
         if is_conditional and not cond.evaluate():
@@ -258,16 +353,45 @@ class CPU():
 
         addr = self.pop_int()
         self.pc.set(addr)
-
+        self.cycles += cycles[0]
     def handle_jp_imm16(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
+        addr = self.bytearray_to_int(self.read_next(2))
         cond = self.conditionals[(opcode >> 3) & 0b11]
         if is_conditional and not cond.evaluate():
             self.cycles += cycles[1]
             return
-
-        addr = self.bytearray_to_int(self.read_next(2))
-        self.pc.set(addr)
         
+        self.pc.set(addr)
+        self.cycles += cycles[0]
+    def handle_jp_hl(self, opcode:int, flags:str, cycles:list[int]):
+        addr = self.registers["HL"].get()
+        self.pc.set(addr)
+
+        self.cycles += cycles[0]
+    def handle_call_imm16(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
+        addr = self.bytearray_to_int(self.read_next(2))
+        cond = self.conditionals[(opcode >> 3) & 0b11]
+        pc = self.pc
+
+        if is_conditional and not cond.evaluate():
+            self.cycles += cycles[1]
+            return
+
+        curr_addr = pc.get()
+        self.push_int(curr_addr)
+        pc.set(addr)
+
+        self.cycles += cycles[0]
+    def handle_rst(self, opcode:int, flags:str, cycles:list[int]):
+        pc = self.pc
+        addr = ((opcode >> 3) & 0b111) * 8
+
+        curr_addr = pc.get()
+        self.push_int(curr_addr)
+
+        pc.set(addr)
+        self.cycles += cycles[0]
+    
     def handle_instruction(self, opcode):
         match opcode:
             case 0x00: #NOP
