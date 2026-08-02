@@ -13,7 +13,7 @@ https://gbdev.io/pandocs/CPU_Instruction_Set.html
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from memory.registers import Register, Register8b, Register16b, Register16b_uncombined, Register16b_mem, FlagRegister
-
+from cpu.conditions import Conditional, NZ, Z, NC, C
 if TYPE_CHECKING:
     from board.board import Motherboard
 
@@ -22,7 +22,7 @@ class CPU():
         self.board = board
         self.cycles = 0
 
-        f = FlagRegister(0xB0)
+        self.flags = FlagRegister(0xB0)
         a = Register8b(0x01)
         b = Register8b(0x00)
         c = Register8b(0x13)
@@ -31,7 +31,7 @@ class CPU():
         h = Register8b(0x01)
         l = Register8b(0x4D)
 
-        af = Register16b(a,f)
+        af = Register16b(a,self.flags)
         bc = Register16b(b,c)
         de = Register16b(d,e)
         hl = Register16b(h,l)
@@ -48,7 +48,7 @@ class CPU():
             Register16b_mem(hl, self.board.memory, 0),
             a
         ]
-
+        
         self.registers_16b:list[Register16b|Register16b_uncombined] = [
             bc,de,hl,sp
         ]
@@ -64,13 +64,20 @@ class CPU():
             Register16b_mem(hl, self.board.memory, 2),   
         ]
 
+        self.conditionals:list[Conditional] = [
+            NZ(self.flags),
+            Z(self.flags),
+            NC(self.flags),
+            C(self.flags)
+        ]
+        
         self.registers:dict[str,Register] = {
             "A": a,
             "B": b,
             "C": c,
             "D": d,
             "E": e,
-            "F": f,
+            "F": self.flags,
             "H": h,
             "L": l,
             "AF": af,
