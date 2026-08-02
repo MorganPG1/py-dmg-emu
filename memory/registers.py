@@ -126,6 +126,27 @@ class Register8b(Register):
         self.val = (val - 1) & 0xFF
         return val
 
+class FlagRegister(Register8b):
+    def set(self, value: int):
+        super().set(value)
+        self.val &= 0xF0
+    def inc(self) -> bool:
+        raise NotImplementedError("INC/DEC/GETI/GETD not implemented for the flag register.")
+    def dec(self) -> bool:
+        raise NotImplementedError("INC/DEC/GETI/GETD not implemented for the flag register.")
+    def getd(self) -> int:
+        raise NotImplementedError("INC/DEC/GETI/GETD not implemented for the flag register.")
+    def geti(self) -> int:
+        raise NotImplementedError("INC/DEC/GETI/GETD not implemented for the flag register.")
+    def get_z(self) -> bool:
+        return bool(self.val & 0x80)
+    def get_n(self) -> bool:
+        return bool(self.val & 0x40)
+    def get_h(self) -> bool:
+        return bool(self.val & 0x20)
+    def get_c(self) -> bool:
+        return bool(self.val & 0x10)
+    
 class Register16b(Register):
     '''
     A 16 bit register

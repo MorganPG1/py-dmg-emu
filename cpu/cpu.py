@@ -12,7 +12,7 @@ https://gbdev.io/pandocs/CPU_Instruction_Set.html
 '''
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from memory.registers import Register, Register8b, Register16b, Register16b_uncombined, Register16b_mem
+from memory.registers import Register, Register8b, Register16b, Register16b_uncombined, Register16b_mem, FlagRegister
 
 if TYPE_CHECKING:
     from board.board import Motherboard
@@ -22,7 +22,7 @@ class CPU():
         self.board = board
         self.cycles = 0
 
-        f = Register8b(0xB0)
+        f = FlagRegister(0xB0)
         a = Register8b(0x01)
         b = Register8b(0x00)
         c = Register8b(0x13)
@@ -151,7 +151,7 @@ class CPU():
 
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         pass
-    
+
     def handle_instruction(self, opcode):
         match opcode:
             case 0x00: #NOP
