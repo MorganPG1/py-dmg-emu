@@ -301,10 +301,30 @@ class CPU():
         self.cycles += cycles[0]
     def handle_ld_a_imm16(self, opcode:int, flags:str, cycles:list[int]):
         addr = self.bytearray_to_int(self.read_next(2))
-
         data = self.board.memory.read(addr,1)[0]
+
         self.registers["A"].set(data)
 
+        self.cycles += cycles[0]
+    def handle_ld_imm16_a(self, opcode:int, flags:str, cycles:list[int]):
+        addr = self.bytearray_to_int(self.read_next(2))
+        data = bytearray([self.registers["A"].get()])
+
+        self.board.memory.write(addr, data)
+
+        self.cycles += cycles[0]
+    def handle_ld_hl_sp_imm8(self, opcode:int, flags:str, cycles:list[int]):
+        offset = int.from_bytes(self.read_next(1), signed=True)
+        sp = self.registers["SP"].get()
+
+        res = sp + offset
+
+        z = 0
+        n = 0
+        h = ((sp & 0x0F) + (offset & 0x0F)) > 0x0F
+        c = ((sp & 0xFF) + (offset & 0xFF)) > 0xFF
+
+        self.registers["HL"].set(res)
         self.cycles += cycles[0]
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         addr = self.read_next(1)[0]
