@@ -46,8 +46,8 @@ class MemoryController():
     A controller of memory regions\n
     Allows for reading from the entire memory space
     '''
-    def __init__(self, memoryMap:dict[tuple[int], MemoryRegion]) -> None:
-        self.mem_regions:dict[tuple, MemoryRegion] = memoryMap
+    def __init__(self, memoryMap:dict[tuple[int, int], MemoryRegion]) -> None:
+        self.mem_regions:dict[tuple[int,int], MemoryRegion] = memoryMap
 
         pass
     
