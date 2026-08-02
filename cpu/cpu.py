@@ -201,6 +201,24 @@ class CPU():
             self.push(
                 self.int_to_bytearray(val, True)
             )
+
+    def handle_inc_8b(self, opcode:int, is_dec:bool, flags:str, cycles:list[int]):
+        operand = self.registers_8b[(opcode >> 3) & 0b111]
+        old = operand.get()
+        if is_dec:
+            h = (old & 0x0F) == 0x00
+            new = (old - 1) & 0xFF
+
+        else:
+            h = (old & 0x0F) == 0x0F
+            new = (old + 1) & 0xFF
+
+        z = (new == 0)
+        n = is_dec
+        c = self.flags.get_c()
+        self.flags.set_znhc(z,n,h,c)
+        
+
     def handle_instruction(self, opcode):
         match opcode:
             case 0x00: #NOP

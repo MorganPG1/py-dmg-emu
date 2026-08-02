@@ -166,7 +166,8 @@ class FlagRegister(Register8b):
             self.val |= (1 << 4)
         else:
             self.val &= ~(1 << 4)
-
+    def set_znhc(self, z:int, n:int, h:int, c:int):
+        self.val = (z << 7) | (n << 6) | (h << 5) | (c << 4)
 class Register16b(Register):
     '''
     A 16 bit register
