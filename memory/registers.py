@@ -146,7 +146,27 @@ class FlagRegister(Register8b):
         return bool(self.val & 0x20)
     def get_c(self) -> bool:
         return bool(self.val & 0x10)
-    
+    def set_z(self, state:int):
+        if state:
+            self.val |= (1 << 7)
+        else:
+            self.val &= ~(1 << 7)
+    def set_n(self, state:int):
+        if state:
+            self.val |= (1 << 6)
+        else:
+            self.val &= ~(1 << 6)
+    def set_h(self, state:int):
+        if state:
+            self.val |= (1 << 5)
+        else:
+            self.val &= ~(1 << 5)
+    def set_c(self, state:int):
+        if state:
+            self.val |= (1 << 4)
+        else:
+            self.val &= ~(1 << 4)
+
 class Register16b(Register):
     '''
     A 16 bit register
