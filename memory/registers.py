@@ -5,7 +5,7 @@ memory/registers.py
 
 Classes for 8 and 16 bit registers
 '''
-
+from memory.memory import MemoryController
 class Register():
     '''
     Base class for all registers
@@ -218,3 +218,62 @@ class Register16b_uncombined(Register):
         val = self.val
         self.val = (val - 1) & 0xFFFF
         return val
+
+class Register16b_mem(Register8b):
+    '''
+    i have no clue how to describe this for now so uh future me update this
+    pretty much [HL], [BC], [DE], you get the idea
+    '''
+
+    def __init__(self, register:Register16b, mem:MemoryController, mode:int) -> None:
+        self.reg = register
+        self.mem = mem
+        self.mode = mode
+    def get(self) -> int:
+        match self.mode:
+            case 1:
+                addr = self.reg.geti()
+            case 2:
+                addr = self.reg.getd()
+            case _:
+                addr = self.reg.get()
+
+        return self.mem.read(addr, 1)[0]
+    def set(self, value: int):
+        match self.mode:
+            case 1:
+                addr = self.reg.geti()
+            case 2:
+                addr = self.reg.getd()
+            case _:
+                addr = self.reg.get()
+
+        data = bytearray([value])
+        self.mem.write(addr, data)
+    def inc(self) -> bool:
+        match self.mode:
+            case 1:
+                addr = self.reg.geti()
+            case 2:
+                addr = self.reg.getd()
+            case _:
+                addr = self.reg.get()
+
+        val = self.mem.read(addr, 1)[0] + 1
+        self.mem.write(addr, bytearray([val & 0xFF]))
+
+        return val > 0xFF
+    def dec(self) -> bool:
+        match self.mode:
+            case 1:
+                addr = self.reg.geti()
+            case 2:
+                addr = self.reg.getd()
+            case _:
+                addr = self.reg.get()
+
+        val = self.mem.read(addr, 1)[0] - 1
+        self.mem.write(addr, bytearray([val & 0xFF]))
+
+        return val < 0x0
+    
