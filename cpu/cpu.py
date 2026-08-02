@@ -102,7 +102,7 @@ class CPU():
         addr = pc.val
 
         data = self.board.memory.read(addr, count)
-        pc.val += (addr + 1)
+        pc.val = (addr + count)
 
         return data
 

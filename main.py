@@ -1,12 +1,13 @@
 from board.board import Motherboard
 
-mb = Motherboard("./rom.gb")
+mb = Motherboard("./tetris.gb")
 running = True
 
-for name, reg in mb.cpu.registers.items():
-    print(f"{name}: {hex(reg.get())}")
-    
 while running:
-    mb.mainloop()
-
-    
+    try:
+        mb.mainloop(True)
+    except KeyboardInterrupt as e:
+        print("EXECUTION STOPPED")
+        for name, reg in mb.cpu.registers.items():
+            print(f"{name}: {hex(reg.get())}")
+        running = False

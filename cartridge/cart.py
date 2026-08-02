@@ -11,7 +11,8 @@ from memory.memory import MemoryRegion
 from cartridge.mbc import *
 
 MBC_CONTROLLERS = {
-    0x0: MBC0
+    0x0: MBC0,
+    0x8: MBC0,
 }
 
 class Cart():
@@ -26,7 +27,7 @@ class Cart():
         if mbc in MBC_CONTROLLERS:
             self.mbc = MBC_CONTROLLERS[mbc](self.rom)
         else:
-            raise NotImplementedError("MBC unknown or not implemented. Load a different ROM and try again")
+            raise NotImplementedError(f"MBC ({hex(mbc)}) unknown or not implemented. Load a different ROM and try again")
 
     def getMBC(self) -> MemoryRegion:
         return self.mbc

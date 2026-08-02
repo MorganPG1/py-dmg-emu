@@ -82,7 +82,7 @@ class MemoryController():
                     remaining -= n
                     break
             else:
-                raise ValueError(f"Unmapped address during read from {curr_addr}")
+                raise ValueError(f"Unmapped address during read from {hex(curr_addr)}")
     
         return data
 
@@ -115,5 +115,5 @@ class MemoryController():
                     curr_addr += n
                     break
             else:
-                raise ValueError(f"Unmapped address during write to {curr_addr}")
+                raise ValueError(f"Unmapped address during write to {hex(curr_addr)}")
     
