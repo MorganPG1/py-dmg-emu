@@ -1262,3 +1262,12 @@ class CPU():
                 self.handle_alu_8b(opcode, True, flags='Z1HC', cycles=[8])
             case 0xFF: #RST $38
                 self.handle_rst(opcode, flags='----', cycles=[16])
+
+    def step(self):
+        instr = self.read_next(1)[0]
+
+        cycles_before = self.cycles
+        self.handle_instruction(instr)
+        cycles_after = self.cycles
+
+        return cycles_after - cycles_before
