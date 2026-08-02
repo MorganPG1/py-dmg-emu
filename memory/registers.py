@@ -7,32 +7,91 @@ Classes for 8 and 16 bit registers
 '''
 
 class Register():
+    '''
+    Base class for all registers
+    '''
     def __init__(self) -> None:
+        self.val:int
+        '''The value stored in the register'''
+        
         pass
 
     def get(self) -> int:
+        '''
+        Returns the value currently stored in the register
+
+        :param self: The Register object
+        :return: The value stored in the register
+        :rtype: int
+        '''
         pass
 
     def set(self, value:int):
+        '''
+        Changes the value stored in the register
+
+        :param self: The Register object
+        :param value: The value to store in the register
+        :type value: int
+        '''
         pass
 
     def inc(self) -> bool:
+        '''
+        Increments the value stored in the register
+
+        :param self: The Register object
+        :return: True if an overflow happened, False otherwise
+        :rtype: bool
+        '''
         pass
 
     def dec(self) -> bool:
+        '''
+        Decrements the value stored in the register
+
+        :param self: The Register object
+        :return: True if an underflow happened, False otherwise
+        :rtype: bool
+        '''
         pass
 
     def geti(self) -> int:
+        '''
+        Returns the value stored in the register, then increments it
+
+        :param self: The Register object
+        :return: The value stored in the register
+        :rtype: int
+        '''
         val = self.get()
         self.inc()
         return val
     
     def getd(self) -> int:
+        '''
+        Returns the value stored in the register, then decrements it
+
+        :param self: The Register object
+        :return: The value stored in the register
+        :rtype: int
+        '''
         val = self.get()
         self.dec()
         return val
+    
 class Register8b(Register):
+    '''
+    An 8 bit register
+    '''
     def __init__(self, initial_val:int=0x00) -> None:
+        '''
+        An 8 bit register
+
+        :param self: The Register8b object
+        :param initial_val: The value to initialise the register to
+        :type initial_val: int
+        '''
         self.val:int = initial_val & 0xFF
 
     def get(self) -> int:
@@ -68,7 +127,19 @@ class Register8b(Register):
         return val
 
 class Register16b(Register):
+    '''
+    A 16 bit register
+    '''
     def __init__(self, regA:Register8b, regB:Register8b) -> None:
+        '''
+        A 16 bit register
+
+        :param self: The Register16b object
+        :param regA: The register that stores the upper 8 bits
+        :type regA: Register8b
+        :param regB: The register that stores the lower 8 bits
+        :type regB: Register8b
+        '''
         self.regA = regA
         self.regB = regB
         
