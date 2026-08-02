@@ -184,4 +184,37 @@ class Register16b(Register):
         self.regB.val = vald & 0xFF
 
         return val
-    
+
+class Register16b_uncombined(Register):
+    '''
+    A 16 bit register that is not made up of 2 smaller registers (unlike Register16b)
+    '''
+    def __init__(self, initial_val:int=0x00) -> None:
+        '''
+        A 16 bit register 
+
+        :param self: The Register16b_uncombined object
+        :param initial_val: The value to initialise the register to
+        :type initial_val: int
+        '''
+        self.val = initial_val
+    def get(self) -> int:
+        return self.val & 0xFFFF
+    def set(self, value: int):
+        self.val = value & 0xFFFF
+    def inc(self) -> bool:
+        inc = self.val + 1
+        self.val = inc & 0xFFFF
+        return inc > 0xFFFF
+    def dec(self) -> bool:
+        dec = self.val - 1
+        self.val = dec & 0xFFFF
+        return dec < 0
+    def geti(self) -> int:
+        val = self.val
+        self.val = (val + 1) & 0xFFFF
+        return val
+    def getd(self) -> int:
+        val = self.val
+        self.val = (val - 1) & 0xFFFF
+        return val
