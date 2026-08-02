@@ -70,7 +70,7 @@ class CPU():
             NC(self.flags),
             C(self.flags)
         ]
-        
+
         self.registers:dict[str,Register] = {
             "A": a,
             "B": b,
@@ -157,7 +157,16 @@ class CPU():
         self.cycles += cycles[0]
 
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
-        pass
+        cond = self.conditionals[(opcode >> 3) & 0b11]
+        pc = self.registers["PC"]
+
+        if is_conditional and not cond.evaluate():
+            self.cycles += cycles[1]
+            return
+
+        addr = int.from_bytes(self.read_next(2))
+        pc.val += addr
+        self.cycles += cycles[0]
 
     def handle_instruction(self, opcode):
         match opcode:
