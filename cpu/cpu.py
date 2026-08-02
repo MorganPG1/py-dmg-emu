@@ -36,7 +36,7 @@ class CPU():
         de = Register16b(d,e)
         hl = Register16b(h,l)
         sp = Register16b_uncombined(0xFFFE)
-        pc = Register16b_uncombined(0x0100)
+        self.pc = Register16b_uncombined(0x0100)
 
         self.registers_8b:list[Register8b] = [
             b,
@@ -85,7 +85,7 @@ class CPU():
             "DE": de,
             "HL": hl,
             "SP": sp,
-            "PC": pc
+            "PC": self.pc
         }
     def bytearray_to_int(self, ba:bytearray) -> int:
         return int.from_bytes(ba, 'little')
@@ -95,7 +95,7 @@ class CPU():
     
     
     def read_next(self, count:int) -> bytearray:
-        pc = self.registers["PC"]
+        pc = self.pc
         addr = pc.val
 
         data = self.board.memory.read(addr, count)
@@ -117,6 +117,12 @@ class CPU():
         sp.val = (addr + count) & 0xFFFF
 
         return data
+
+    def push_int(self, data:int):
+        self.push(self.int_to_bytearray(data, True))
+
+    def pop_int(self) -> int:
+        return self.bytearray_to_int(self.pop(2))
 
     def handle_stop(self, opcode:int, flags:str, cycles:list[int]):
         raise Exception("STOP")
@@ -180,7 +186,7 @@ class CPU():
 
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         cond = self.conditionals[(opcode >> 3) & 0b11]
-        pc = self.registers["PC"]
+        pc = self.pc
 
         if is_conditional and not cond.evaluate():
             self.cycles += cycles[1]
@@ -194,13 +200,11 @@ class CPU():
         operand = self.registers_16bstk[(opcode >> 4) & 0b11]
 
         if is_pop:
-            val = self.bytearray_to_int(self.pop())
+            val = self.pop_int()
             operand.set(val)
         else:
             val = operand.get()
-            self.push(
-                self.int_to_bytearray(val, True)
-            )
+            self.push_int(val)
 
     def handle_inc_8b(self, opcode:int, is_dec:bool, flags:str, cycles:list[int]):
         operand = self.registers_8b[(opcode >> 3) & 0b111]
@@ -245,6 +249,24 @@ class CPU():
                 self.alu_or(a,b)
             case 7:
                 self.alu_cp(a,b)
+
+    def handle_ret(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
+        cond = self.conditionals[(opcode >> 3) & 0b11]
+        if is_conditional and not cond.evaluate():
+            self.cycles += cycles[1]
+            return
+
+        addr = self.pop_int()
+        self.pc.set(addr)
+
+    def handle_jp_imm16(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
+        cond = self.conditionals[(opcode >> 3) & 0b11]
+        if is_conditional and not cond.evaluate():
+            self.cycles += cycles[1]
+            return
+
+        addr = self.bytearray_to_int(self.read_next(2))
+        self.pc.set(addr)
         
     def handle_instruction(self, opcode):
         match opcode:
