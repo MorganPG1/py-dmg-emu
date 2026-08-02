@@ -487,12 +487,11 @@ class CPU():
         pc.set(addr)
         self.cycles += cycles[0]
 
-    def handle_di(self, opcode:int, flags:str, cycles:list[int]):
-        self.ime = 0
-        self.cycles += cycles[0]
-
-    def handle_ei(self, opcode:int, flags:str, cycles:list[int]):
-        self.ei_pending = True
+    def handle_int_control(self, opcode:int, ei:bool, flags:str, cycles:list[int]):
+        if ei:
+            self.ei_pending = True
+        else:
+            self.ime = 0
         self.cycles += cycles[0]
 
     def handle_instruction(self, opcode):
