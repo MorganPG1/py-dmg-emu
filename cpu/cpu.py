@@ -317,15 +317,31 @@ class CPU():
         offset = int.from_bytes(self.read_next(1), signed=True)
         sp = self.registers["SP"].get()
 
-        res = sp + offset
+        res = (sp + offset) & 0xFFFF
 
         z = 0
         n = 0
         h = ((sp & 0x0F) + (offset & 0x0F)) > 0x0F
         c = ((sp & 0xFF) + (offset & 0xFF)) > 0xFF
+        self.flags.set_znhc(z,n,h,c)
 
         self.registers["HL"].set(res)
         self.cycles += cycles[0]
+    def handle_add_sp_imm8(self, opcode:int, flags:str, cycles:list[int]):
+        offset = int.from_bytes(self.read_next(1), signed=True)
+        sp = self.registers["SP"]
+        val = sp.get()
+        
+        res = (val + offset) & 0xFFFF
+
+        z = 0
+        n = 0
+        h = ((val & 0x0F) + (offset & 0x0F)) > 0x0F
+        c = ((val & 0xFF) + (offset & 0xFF)) > 0xFF
+        self.flags.set_znhc(z,n,h,c)
+
+        sp.set(res)
+
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         addr = self.read_next(1)[0]
         cond = self.conditionals[(opcode >> 3) & 0b11]
