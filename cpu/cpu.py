@@ -294,6 +294,18 @@ class CPU():
         self.registers["A"].set(val)
 
         self.cycles += cycles[0]
+    def handle_ld_sp_hl(self, opcode:int, flags:str, cycles:list[int]):
+        hl = self.registers["HL"].get()
+        self.registers["SP"].set(hl)
+
+        self.cycles += cycles[0]
+    def handle_ld_a_imm16(self, opcode:int, flags:str, cycles:list[int]):
+        addr = self.bytearray_to_int(self.read_next(2))
+
+        data = self.board.memory.read(addr,1)[0]
+        self.registers["A"].set(data)
+
+        self.cycles += cycles[0]
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         addr = self.read_next(1)[0]
         cond = self.conditionals[(opcode >> 3) & 0b11]
