@@ -87,6 +87,9 @@ class CPU():
             "SP": sp,
             "PC": self.pc
         }
+
+        self.ime = 0
+        self.ei_pending = False
     def bytearray_to_int(self, ba:bytearray) -> int:
         return int.from_bytes(ba, 'little')
     def int_to_bytearray(self, integer:int, is_stack:bool=False) -> bytearray:
@@ -331,7 +334,7 @@ class CPU():
         offset = int.from_bytes(self.read_next(1), signed=True)
         sp = self.registers["SP"]
         val = sp.get()
-        
+
         res = (val + offset) & 0xFFFF
 
         z = 0
@@ -455,8 +458,20 @@ class CPU():
 
         pc.set(addr)
         self.cycles += cycles[0]
-    
+
+    def handle_di(self, opcode:int, flags:str, cycles:list[int]):
+        self.ime = 0
+        self.cycles += cycles[0]
+
+    def handle_ei(self, opcode:int, flags:str, cycles:list[int]):
+        self.ei_pending = True
+        self.cycles += cycles[0]
+        
     def handle_instruction(self, opcode):
+        if self.ei_pending:
+            self.ime = 1
+            self.ei_pending = False
+
         match opcode:
             case 0x00: #NOP
                 pass
