@@ -87,12 +87,34 @@ class CPU():
             "SP": sp,
             "PC": pc
         }
+    def bytearray_to_int(self, ba:bytearray) -> int:
+        return int.from_bytes(ba, 'little')
+    def int_to_bytearray(self, integer:int, is_stack:bool=False) -> bytearray:
+        order = 'big' if is_stack else 'little'
+        return bytearray(integer.to_bytes(2, byteorder=order))
+    
+    
     def read_next(self, count:int) -> bytearray:
         pc = self.registers["PC"]
         addr = pc.val
 
         data = self.board.memory.read(addr, count)
         pc.val += (addr + 1)
+
+        return data
+
+    def push(self, data:bytearray):
+        sp = self.registers["SP"]
+        addr = (sp.val - len(data)) & 0xFFFF
+        self.board.memory.write(addr, data)
+        
+
+    def pop(self, count:int=2) -> bytearray:
+        sp = self.registers["SP"]
+        addr = sp.val
+
+        data = self.board.memory.read(addr, count)
+        sp.val = (addr + count) & 0xFFFF
 
         return data
 
@@ -123,7 +145,7 @@ class CPU():
 
     def handle_ld_r16_imm16(self, opcode:int, flags:str, cycles:list[int]):
         dest = self.registers_16b[(opcode >> 4) & 0b11]
-        val = int.from_bytes(self.read_next(2))
+        val = self.bytearray_to_int(self.read_next(2))
 
         dest.set(val)
         self.cycles += cycles[0]
@@ -144,7 +166,7 @@ class CPU():
 
     def handle_ld_imm16_sp(self, opcode:int, flags:str, cycles:list[int]):
         val = self.registers["SP"].get()
-        addr = int.from_bytes(self.read_next(2))
+        addr = self.bytearray_to_int(self.read_next(2))
 
         self.board.memory.write(addr, bytearray([val]))
         self.cycles += cycles[0]
@@ -164,10 +186,21 @@ class CPU():
             self.cycles += cycles[1]
             return
 
-        addr = int.from_bytes(self.read_next(2))
+        addr = self.bytearray_to_int(self.read_next(2))
         pc.val += addr
         self.cycles += cycles[0]
 
+    def handle_stack(self, opcode:int, is_pop:bool, flags:str, cycles:list[int]):
+        operand = self.registers_16bstk[(opcode >> 4) & 0b11]
+
+        if is_pop:
+            val = self.bytearray_to_int(self.pop())
+            operand.set(val)
+        else:
+            val = operand.get()
+            self.push(
+                self.int_to_bytearray(val, True)
+            )
     def handle_instruction(self, opcode):
         match opcode:
             case 0x00: #NOP
