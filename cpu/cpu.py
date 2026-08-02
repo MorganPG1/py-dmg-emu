@@ -217,8 +217,35 @@ class CPU():
         n = is_dec
         c = self.flags.get_c()
         self.flags.set_znhc(z,n,h,c)
-        
 
+    def handle_alu_8b(self, opcode:int, is_immediate:bool, flags:str, cycles:list[int]):
+        acc = self.registers["A"]
+        a = acc.get()
+        if is_immediate:
+            b = self.read_next(1)[0]
+        else:
+            b = self.registers_8b[opcode & 0x111].get()
+
+        operation = (opcode >> 3) & 0b111
+
+        match operation:
+            case 0:
+                self.alu_add(a,b)
+            case 1:
+                self.alu_adc(a,b)
+            case 2:
+                self.alu_sub(a,b)
+            case 3:
+                self.alu_sbc(a,b)
+            case 4:
+                self.alu_and(a,b)
+            case 5:
+                self.alu_xor(a,b)
+            case 6:
+                self.alu_or(a,b)
+            case 7:
+                self.alu_cp(a,b)
+        
     def handle_instruction(self, opcode):
         match opcode:
             case 0x00: #NOP
