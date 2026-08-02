@@ -206,11 +206,76 @@ class CPU():
         self.flags.set_znhc(z,n,h,c)
         return res
 
+    def prefix_rlc(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+        c = (val & 0x80) >> 7
+        res = (val << 1) | c
+
+        z = (res & 0xFF) == 0
+        n = 0
+        h = 0
+
+        operand.set(res & 0xFF)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+    def prefix_rrc(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+        c = val & 1
+        res = (val >> 1) | (c << 7)
+
+        z = (res & 0xFF) == 0
+        n = 0
+        h = 0
+
+        operand.set(res & 0xFF)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+    def prefix_rl(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+
+        old_c = self.flags.get_c()
+        c = (val & 0x80) >> 7
+
+        res = (val << 1) | old_c
+
+        z = (res & 0xFF) == 0
+        n = 0
+        h = 0
+
+        operand.set(res & 0xFF)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+    def prefix_rr(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+
+        old_c = self.flags.get_c() << 7
+        c = val & 1
+
+        res = (val >> 1) | old_c
+
+        z = (res & 0xFF) == 0
+        n = 0
+        h = 0
+
+        operand.set(res & 0xFF)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+
     def handle_prefix(self, opcode:int, flags:str, cycles:list[int]):
         prefix_opcode = self.read_next(1)[0]
         group = (prefix_opcode >> 6) & 0b11
         bit_ind = (prefix_opcode >> 3) & 0b111
         operand = self.registers_8b[prefix_opcode & 0b111]
+        is_hl:bool = isinstance(operand, Register16b_mem)
+
         handlers = [
             self.prefix_rlc,
             self.prefix_rrc,
@@ -225,7 +290,7 @@ class CPU():
             case 0:
                 instr = bit_ind
                 handler = handlers[instr]
-                handler(operand)
+                handler(operand, is_hl)
             case 1: #BIT
                 val = operand.get()
                 z = (val >> bit_ind) & 1
@@ -233,17 +298,20 @@ class CPU():
                 h = 0
                 c = self.flags.get_c()
                 self.flags.set_znhc(z,n,h,c)
+
+                self.cycles += 12 if is_hl else 8
             case 2: #RES
                 val = operand.get()
                 mask = ~(0b1 << bit_ind)
 
                 operand.set(val & mask)
+                self.cycles += 16 if is_hl else 8
             case 3: #SET
                 val = operand.get()
                 mask = (0b1 << bit_ind)
-                
+
                 operand.set(val | mask)
-        self.cycles += cycles[0]
+                self.cycles += 16 if is_hl else 8
     def handle_stop(self, opcode:int, flags:str, cycles:list[int]):
         raise Exception("STOP")
     
