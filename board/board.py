@@ -32,4 +32,5 @@ class Motherboard():
         pass
 
     def mainloop(self):
+        cycles = self.cpu.step()
         pass
