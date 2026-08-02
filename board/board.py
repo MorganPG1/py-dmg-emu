@@ -7,11 +7,11 @@ A 'motherboard' like structure, allows all major components to interact with eac
 '''
 from memory.memory import MemoryController, MemoryRegion
 from memory.ram import RAM
+from cpu.cpu import CPU
 
 class Motherboard():
     def __init__(self, romfile:str) -> None:
 
-        self.cpu:None
 
         ram = RAM(0x2000)
         memory_map:dict[tuple[int,int], MemoryRegion] = {
@@ -20,6 +20,8 @@ class Motherboard():
         }
 
         self.memory:MemoryController = MemoryController(memory_map)
+        self.cpu = CPU(self)
+        
         pass
 
     def mainloop(self):

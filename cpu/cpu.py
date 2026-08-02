@@ -10,7 +10,7 @@ https://gbdev.io/gb-opcodes/optables/
 https://gbdev.io/pandocs/CPU_Registers_and_Flags.html
 https://gbdev.io/pandocs/CPU_Instruction_Set.html
 '''
-
+from __future__ import annotations
 from typing import TYPE_CHECKING
 from memory.registers import Register, Register8b, Register16b, Register16b_uncombined, Register16b_mem
 
@@ -64,7 +64,7 @@ class CPU():
             Register16b_mem(hl, self.board.memory, 2),   
         ]
 
-        self.registers = {
+        self.registers:dict[str,Register] = {
             "A": a,
             "B": b,
             "C": c,
@@ -80,8 +80,18 @@ class CPU():
             "SP": sp,
             "PC": pc
         }
-        pass
+    def read_next(self, count:int) -> bytearray:
+        pc = self.registers["PC"]
+        addr = pc.val
 
+        data = self.board.memory.read(addr, count)
+        pc.val += (addr + 1)
+
+        return data
+
+    def handle_stop(self, opcode:int, flags:str, cycles:list[int]):
+        raise Exception("STOP")
+    
     def handle_ld_r8_r8(self, opcode:int, flags:str, cycles:list[int]):
         source = self.registers_8b[opcode & 0b111]
         dest = self.registers_8b[(opcode >> 3) & 0b111]
@@ -93,7 +103,7 @@ class CPU():
         dest.set(val)
 
         self.cycles += cycles[0]
-
+    
     def handle_inc_16b(self, opcode:int, is_dec:bool, flags:str, cycles:list[int]):
         operand = self.registers_16b[(opcode >> 4) & 0b11]
 
@@ -103,7 +113,45 @@ class CPU():
             operand.inc()
 
         self.cycles += cycles[0]
-        
+
+    def handle_ld_r16_imm16(self, opcode:int, flags:str, cycles:list[int]):
+        dest = self.registers_16b[(opcode >> 4) & 0b11]
+        val = int.from_bytes(self.read_next(2))
+
+        dest.set(val)
+        self.cycles += cycles[0]
+
+    def handle_ld_r16mem_a(self, opcode:int, flags:str, cycles:list[int]):
+        dest = self.registers_16bmem[(opcode >> 4) & 0b11]
+        val = self.registers["A"].get()
+
+        dest.set(val)
+        self.cycles += cycles[0]
+
+    def handle_ld_r8_imm8(self, opcode:int, flags:str, cycles:list[int]):
+        dest = self.registers_8b[(opcode >> 3) & 0b111]
+        val = self.read_next(1)[0]
+
+        dest.set(val)
+        self.cycles += cycles[0]
+
+    def handle_ld_imm16_sp(self, opcode:int, flags:str, cycles:list[int]):
+        val = self.registers["SP"].get()
+        addr = int.from_bytes(self.read_next(2))
+
+        self.board.memory.write(addr, bytearray([val]))
+        self.cycles += cycles[0]
+
+    def handle_ld_a_r16mem(self, opcode:int, flags:str, cycles:list[int]):
+        dest = self.registers["A"]
+        val = self.registers_16bmem[(opcode >> 4) & 0b11].get()
+
+        dest.set(val)
+        self.cycles += cycles[0]
+
+    def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
+        pass
+    
     def handle_instruction(self, opcode):
         match opcode:
             case 0x00: #NOP
