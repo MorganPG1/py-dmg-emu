@@ -394,6 +394,7 @@ class CPU():
 
         operation = (opcode >> 3) & 0b111
 
+        v = None
         match operation:
             case 0:
                 v = self.alu_add(a,b)
@@ -411,6 +412,26 @@ class CPU():
                 v = self.alu_or(a,b)
             case 7:
                 self.alu_sub(a,b)
+                
+        if v != None:
+            self.registers["A"].set(v)
+
+        self.cycles += cycles[0]
+    def handle_add_hl_r16(self, opcode:int, flags:str, cycles:list[int]):
+        operand = self.registers_16b[(opcode >> 4) & 0b11]
+        hl = self.registers["HL"]
+
+        a = hl.get()
+        b = operand.get()
+
+        res = a + b
+
+        z = self.flags.get_z()
+        n = 0
+        h = ((res & 0xFFF) < (a & 0xFFF))
+        c = (res < a)
+        self.flags.set_znhc(z,n,h,c)
+
         self.cycles += cycles[0]
     def handle_ret(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         cond = self.conditionals[(opcode >> 3) & 0b11]
