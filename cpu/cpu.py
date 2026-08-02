@@ -494,6 +494,84 @@ class CPU():
             self.ime = 0
         self.cycles += cycles[0]
 
+    def handle_flags_etc(self, opcode:int, flags:str, cycles:list[int]):
+        inst = (opcode >> 3) & 0b111
+        a = self.registers["A"]
+        val = a.get()
+
+        match inst:
+            case 0: #RLCA
+                b7 = (val & 0x80) >> 7
+                res = (val << 1) | b7 
+                c = b7
+
+                self.flags.set_znhc(0,0,0,c)
+                a.set(res & 0xFF)
+            case 1: #RRCA
+                b0 = val & 1
+                res = (val >> 1) | (b0 << 7)
+                c = b0
+
+                self.flags.set_znhc(0,0,0,c)
+                a.set(res)
+            case 2: #RLA
+                old_c = self.flags.get_c()
+                res = (val << 1) | old_c
+                c = (val & 0x80) >> 7
+
+                a.set(res & 0xFF)
+                self.flags.set_znhc(0,0,0,c)
+            case 3: #RRA
+                old_c = self.flags.get_c()
+                res = (val >> 1) | old_c << 7
+                c = val & 1
+
+                a.set(res)
+                self.flags.set_znhc(0,0,0,c)
+            case 4: #DAA
+                s = self.flags.get_n()
+                h = self.flags.get_h()
+                c = self.flags.get_c()
+
+                adj = 0
+
+                if s:
+                    adj += 0x6 if h else 0
+                    adj += 0x60 if c else 0
+                    result = (val - adj) & 0xFF
+                    a.set(result)
+                else:
+                    adj += 0x6 if h or ((val & 0xF) > 0x9) else 0
+
+                    if c or val > 0x99:
+                        adj += 0x60
+                        c = 1
+
+                    result = (val + adj) & 0xFF
+                    a.set(result)
+                z = result == 0
+                self.flags.set_znhc(z, s, 0, c)
+            case 5: #CPL
+                res = (~val) & 0xFF
+                a.set(res)
+
+                z = self.flags.get_z()
+                n = 1
+                h = 1
+                c = self.flags.get_c()
+                self.flags.set_znhc(z,n,h,c)
+            case 6: #SCF
+                z = self.flags.get_z()
+                n = 0
+                h = 0
+                self.flags.set_znhc(z,n,h,1)
+            case 7: #CCF
+                z = self.flags.get_z()
+                n = 0
+                h = 0
+                c = self.flags.get_c()
+                self.flags.set_znhc(z,n,h,not c)
+    
     def handle_instruction(self, opcode):
         if self.ei_pending:
             self.ime = 1
