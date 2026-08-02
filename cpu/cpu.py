@@ -205,7 +205,45 @@ class CPU():
 
         self.flags.set_znhc(z,n,h,c)
         return res
-    
+
+    def handle_prefix(self, opcode:int, flags:str, cycles:list[int]):
+        prefix_opcode = self.read_next(1)[0]
+        group = (prefix_opcode >> 6) & 0b11
+        bit_ind = (prefix_opcode >> 3) & 0b111
+        operand = self.registers_8b[prefix_opcode & 0b111]
+        handlers = [
+            self.prefix_rlc,
+            self.prefix_rrc,
+            self.prefix_rl,
+            self.prefix_rr,
+            self.prefix_sla,
+            self.prefix_sra,
+            self.prefix_swap,
+            self.prefix_srl
+        ]
+        match group:
+            case 0:
+                instr = bit_ind
+                handler = handlers[instr]
+                handler(operand)
+            case 1: #BIT
+                val = operand.get()
+                z = (val >> bit_ind) & 1
+                n = 0
+                h = 0
+                c = self.flags.get_c()
+                self.flags.set_znhc(z,n,h,c)
+            case 2: #RES
+                val = operand.get()
+                mask = ~(0b1 << bit_ind)
+
+                operand.set(val & mask)
+            case 3: #SET
+                val = operand.get()
+                mask = (0b1 << bit_ind)
+                
+                operand.set(val | mask)
+        self.cycles += cycles[0]
     def handle_stop(self, opcode:int, flags:str, cycles:list[int]):
         raise Exception("STOP")
     
@@ -571,7 +609,7 @@ class CPU():
                 h = 0
                 c = self.flags.get_c()
                 self.flags.set_znhc(z,n,h,not c)
-    
+        self.cycles += cycles[0]
     def handle_instruction(self, opcode):
         if self.ei_pending:
             self.ime = 1
