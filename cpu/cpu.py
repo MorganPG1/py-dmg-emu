@@ -278,6 +278,22 @@ class CPU():
         self.board.memory.write(addr, bytearray([val]))
 
         self.cycles += cycles[0]
+    def handle_ldh_a_c(self, opcode:int, flags:str, cycles:list[int]):
+        offset = self.registers["C"].get()
+        addr = 0xFF00+offset
+
+        val = self.board.memory.read(addr, 1)[0]
+        self.registers["A"].set(val)
+
+        self.cycles += cycles[0]
+    def handle_ldh_a_imm8(self, opcode:int, flags:str, cycles:list[int]):
+        offset = self.read_next(1)[0]
+        addr = 0xFF00 + offset
+
+        val = self.board.memory.read(addr, 1)[0]
+        self.registers["A"].set(val)
+
+        self.cycles += cycles[0]
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         addr = self.read_next(1)[0]
         cond = self.conditionals[(opcode >> 3) & 0b11]
