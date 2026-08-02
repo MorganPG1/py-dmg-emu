@@ -421,6 +421,13 @@ class CPU():
         addr = self.pop_int()
         self.pc.set(addr)
         self.cycles += cycles[0]
+    def handle_reti(self, opcode:int, flags:str, cycles:list[int]):
+        addr = self.pop_int()
+        self.pc.set(addr)
+
+        self.ime = 1
+
+        self.cycles += cycles[0]
     def handle_jp_imm16(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         addr = self.bytearray_to_int(self.read_next(2))
         cond = self.conditionals[(opcode >> 3) & 0b11]
@@ -466,7 +473,7 @@ class CPU():
     def handle_ei(self, opcode:int, flags:str, cycles:list[int]):
         self.ei_pending = True
         self.cycles += cycles[0]
-        
+
     def handle_instruction(self, opcode):
         if self.ei_pending:
             self.ime = 1
