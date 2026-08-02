@@ -268,6 +268,72 @@ class CPU():
 
         self.cycles += 16 if is_hl else 8
 
+    def prefix_sla(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+
+        c = (val & 0x80) >> 7
+        res = (val << 1) & 0xFF
+
+        z = res == 0
+        n = 0
+        h = 0
+
+        operand.set(res)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+    def prefix_sra(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+
+        c = (val & 1)
+        b7 = val & 0x80
+
+        res = (val >> 1) | b7
+
+        z = res == 0
+        n = 0
+        h = 0
+
+        operand.set(res)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+    def prefix_swap(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+
+        upper = val >> 4
+        lower = (val << 4) & 0xFF
+
+        res = upper | lower
+
+        z = res == 0
+        n = 0
+        h = 0
+        c = 0
+
+        operand.set(res)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+    def prefix_srl(self, operand:Register8b, is_hl:bool):
+        val = operand.get()
+        
+        c = (val & 1)
+        res = (val >> 1)
+
+        z = res == 0
+        n = 0
+        h = 0
+
+        operand.set(res)
+        self.flags.set_znhc(z,n,h,c)
+
+        self.cycles += 16 if is_hl else 8
+
+
 
     def handle_prefix(self, opcode:int, flags:str, cycles:list[int]):
         prefix_opcode = self.read_next(1)[0]
