@@ -38,7 +38,7 @@ class CPU():
         sp = Register16b_uncombined(0xFFFE)
         pc = Register16b_uncombined(0x0100)
 
-        self.registers_8b:list[Register8b|None] = [
+        self.registers_8b:list[Register8b] = [
             b,
             c,
             d,
@@ -82,7 +82,7 @@ class CPU():
         }
         pass
 
-    def handle_ld_r8_r8(self, opcode, flags, cycles):
+    def handle_ld_r8_r8(self, opcode:int, flags:str, cycles:list[int]):
         source = self.registers_8b[opcode & 0b111]
         dest = self.registers_8b[(opcode >> 3) & 0b111]
         hl_mem = self.registers_8b[6]
@@ -91,8 +91,19 @@ class CPU():
 
         val = source.get()
         dest.set(val)
-        self.cycles += cycles
 
+        self.cycles += cycles[0]
+
+    def handle_inc_16b(self, opcode:int, is_dec:bool, flags:str, cycles:list[int]):
+        operand = self.registers_16b[(opcode >> 4) & 0b11]
+
+        if is_dec:
+            operand.dec()
+        else:
+            operand.inc()
+
+        self.cycles += cycles[0]
+        
     def handle_instruction(self, opcode):
         match opcode:
             case 0x00: #NOP
