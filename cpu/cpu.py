@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 class CPU():
     def __init__(self, board:Motherboard) -> None:
         self.board = board
+        self.cycles = 0
 
         f = Register8b(0xB0)
         a = Register8b(0x01)
@@ -81,7 +82,7 @@ class CPU():
         }
         pass
 
-    def handle_ld_r8_r8(self, opcode, flags):
+    def handle_ld_r8_r8(self, opcode, flags, cycles):
         source = self.registers_8b[opcode & 0b111]
         dest = self.registers_8b[(opcode >> 3) & 0b111]
         hl_mem = self.registers_8b[6]
@@ -90,6 +91,7 @@ class CPU():
 
         val = source.get()
         dest.set(val)
+        self.cycles += cycles
 
     def handle_instruction(self, opcode):
         match opcode:
