@@ -109,6 +109,8 @@ class CPU():
     def push(self, data:bytearray):
         sp = self.registers["SP"]
         addr = (sp.val - len(data)) & 0xFFFF
+
+        sp.val = addr
         self.board.memory.write(addr, data)
         
 
@@ -428,7 +430,7 @@ class CPU():
         val = self.registers["SP"].get()
         addr = self.bytearray_to_int(self.read_next(2))
 
-        self.board.memory.write(addr, bytearray([val]))
+        self.board.memory.write(addr, self.int_to_bytearray(val))
         self.cycles += cycles[0]
 
     def handle_ld_a_r16mem(self, opcode:int, flags:str, cycles:list[int]):
@@ -518,7 +520,7 @@ class CPU():
         sp.set(res)
 
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
-        addr = self.read_next(1)[0]
+        addr = int.from_bytes(self.read_next(1), signed=True)
         cond = self.conditionals[(opcode >> 3) & 0b11]
         pc = self.pc
 
@@ -554,6 +556,8 @@ class CPU():
         z = (new == 0)
         n = is_dec
         c = self.flags.get_c()
+
+        operand.set(new)
         self.flags.set_znhc(z,n,h,c)
         self.cycles += cycles[0]
     def handle_alu_8b(self, opcode:int, is_immediate:bool, flags:str, cycles:list[int]):
@@ -562,7 +566,7 @@ class CPU():
         if is_immediate:
             b = self.read_next(1)[0]
         else:
-            b = self.registers_8b[opcode & 0x111].get()
+            b = self.registers_8b[opcode & 0b111].get()
 
         operation = (opcode >> 3) & 0b111
 

@@ -19,11 +19,13 @@ class Motherboard():
         cart = Cart(romfile)
 
         ram = RAM(0x2000)
-        hram = RAM(126)
+        hram = RAM(128)
         vram = RAM(0x2000)
+        eram = RAM(0x2000)
         memory_map:dict[tuple[int,int], MemoryRegion] = {
             (0x0000, 0x8000): cart.getMBC(),
             (0x8000, 0xA000): vram,
+            (0xA000, 0xC000): eram,
             (0xC000, 0xE000): ram,
             (0xE000, 0xFE00): ram,
             (0xFF80, 0xFFFF): hram,
@@ -39,8 +41,10 @@ class Motherboard():
             pc = self.cpu.registers["PC"].get()
             af = self.cpu.registers["AF"].get()
             hl = self.cpu.registers["HL"].get()
+            bc = self.cpu.registers["BC"].get()
+            sp = self.cpu.registers["SP"].get()
             if pc != self.pc_last:
-                print(f"PC: {hex(pc)}, AF: {hex(af)}, HL:{hex(hl)}")
+                print(f"PC: {hex(pc)}, AF: {hex(af)}, HL:{hex(hl)}, BC:{hex(bc)}, SP:{hex(sp)}")
             self.pc_last = pc
         cycles = self.cpu.step()
 

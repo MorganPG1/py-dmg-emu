@@ -31,7 +31,7 @@ class RAM(MemoryRegion):
 
         #More validation
         if (offset + c) > len(self.memory):
-            raise ValueError(f"End address (0x{hex(offset+c)}) of write ({c} byte(s) from 0x{hex(offset)}) exceeds end of RAM buffer")
+            raise ValueError(f"End address ({hex(offset+c)}) of write ({c} byte(s) to {hex(offset)}) exceeds end of RAM buffer")
         elif offset < 0:
             raise ValueError("Offset must be positive")        
         elif not isinstance(offset, int):

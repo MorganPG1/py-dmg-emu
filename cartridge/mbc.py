@@ -20,5 +20,5 @@ class MBC0(MemoryRegion):
         return self.buffer[offset:offset+count]
 
     def write(self, offset: int, buffer: bytearray) -> None:
-        raise Exception(f"WRITE TO ROM AT {hex(offset)}")
+        #raise Exception(f"WRITE TO ROM AT {hex(offset)}")
         return
