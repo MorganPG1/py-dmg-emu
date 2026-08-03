@@ -517,7 +517,7 @@ class CPU():
         self.flags.set_znhc(z,n,h,c)
 
         sp.set(res)
-
+        self.cycles += cycles[0]
     def handle_jr_imm8(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         addr = int.from_bytes(self.read_next(1), signed=True)
         cond = self.conditionals[(opcode >> 3) & 0b11]
@@ -753,7 +753,7 @@ class CPU():
 
         match opcode:
             case 0x00: #NOP
-                pass
+                self.cycles += 4
             case 0x01: #LD BC, n16
                 self.handle_ld_r16_imm16(opcode, flags='----', cycles=[12])
             case 0x02: #LD [BC], A
