@@ -123,7 +123,7 @@ class CPU():
         return data
 
     def push_int(self, data:int):
-        self.push(self.int_to_bytearray(data, False))
+        self.push(self.int_to_bytearray(data))
 
     def pop_int(self) -> int:
         return self.bytearray_to_int(self.pop(2))

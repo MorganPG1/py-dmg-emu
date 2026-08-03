@@ -12,6 +12,7 @@ from memory.ram import RAM
 from cpu.cpu import CPU
 from cartridge.cart import Cart
 from time import sleep
+from debug.serial import Serial
 class Motherboard():
     def __init__(self, romfile:str) -> None:
         self.pc_last = 0
@@ -22,12 +23,14 @@ class Motherboard():
         hram = RAM(128)
         vram = RAM(0x2000)
         eram = RAM(0x2000)
+        serial = Serial()
         memory_map:dict[tuple[int,int], MemoryRegion] = {
             (0x0000, 0x8000): cart.getMBC(),
             (0x8000, 0xA000): vram,
             (0xA000, 0xC000): eram,
             (0xC000, 0xE000): ram,
             (0xE000, 0xFE00): ram,
+            (0xFF00, 0xFFFF): serial,
             (0xFF80, 0xFFFF): hram,
         }
 
