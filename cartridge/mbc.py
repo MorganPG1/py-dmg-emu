@@ -27,7 +27,9 @@ class MBC1(MemoryRegion):
     '''
     2MB of banked ROM
     '''
-
+    #FFR: this code was written at like 3 AM so like a lot of the code it should be reviewed or rewritten if necessary
+    #somehow this works and i have no clue how
+    #this code is held together by hopes and dreams
     def __init__(self, data:bytearray) -> None:
         self.data = data
         self.bank0 = data[:0x4000]
