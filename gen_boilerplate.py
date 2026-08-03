@@ -142,6 +142,6 @@ for val, inst in data.items():
     elif (val_int & 0b11111111) == 251:
         outs += f"        self.handle_int_control(opcode, True, flags='{flag_str}', cycles={cycles})\n"
     else:
-        outs += "        pass\n"
+        outs += "        self.cycles += 4\n"
 
 print(outs)
