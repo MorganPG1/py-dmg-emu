@@ -793,7 +793,7 @@ class CPU():
 
     def handle_instruction(self, opcode):
         '''
-        Decodes and excecutes an instruction
+        Decodes and executes an instruction
 
         :param self: The CPU object
         :param opcode: The opcode of the instruction
