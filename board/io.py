@@ -1,11 +1,5 @@
 from memory.memory import MemoryRegion
-class IE(MemoryRegion):
-    def __init__(self) -> None:
-        self.state = 0
-    def read(self, offset: int, count: int) -> bytearray:
-        return bytearray([self.state])
-    def write(self, offset: int, buffer: bytearray) -> None:
-        self.state = buffer[0]
+
 class IO(MemoryRegion):
     def __init__(self) -> None:
         self.buffer = 0
@@ -43,7 +37,6 @@ class IO(MemoryRegion):
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         ])
         self.intf:int = 0
-        self.ie = IE()
         self.div = 0
         self.tima = 0
         self.timer_mod = 0

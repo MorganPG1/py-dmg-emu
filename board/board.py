@@ -32,7 +32,6 @@ class Motherboard():
             (0xE000, 0xFE00): ram,
             (0xFF00, 0xFF80): self.io,
             (0xFF80, 0xFFFF): hram,
-            (0xFFFF, 0x10000): self.io.ie,
         }
 
         self.memory:MemoryController = MemoryController(memory_map)
