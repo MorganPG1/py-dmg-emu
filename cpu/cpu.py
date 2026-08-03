@@ -92,9 +92,8 @@ class CPU():
         self.ei_pending = False
     def bytearray_to_int(self, ba:bytearray) -> int:
         return int.from_bytes(ba, 'little')
-    def int_to_bytearray(self, integer:int, is_stack:bool=False) -> bytearray:
-        order = 'big' if is_stack else 'little'
-        return bytearray(integer.to_bytes(2, byteorder=order))
+    def int_to_bytearray(self, integer:int) -> bytearray:
+        return bytearray(integer.to_bytes(2, byteorder='little'))
     
     
     def read_next(self, count:int) -> bytearray:
@@ -124,7 +123,7 @@ class CPU():
         return data
 
     def push_int(self, data:int):
-        self.push(self.int_to_bytearray(data, True))
+        self.push(self.int_to_bytearray(data, False))
 
     def pop_int(self) -> int:
         return self.bytearray_to_int(self.pop(2))
