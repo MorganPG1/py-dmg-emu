@@ -89,7 +89,7 @@ class CPU():
         }
 
         self.ime = 0
-        self.ei_pending = False
+        self.ei_pending = 0
     def bytearray_to_int(self, ba:bytearray) -> int:
         return int.from_bytes(ba, 'little')
     def int_to_bytearray(self, integer:int) -> bytearray:
@@ -665,7 +665,7 @@ class CPU():
 
     def handle_int_control(self, opcode:int, ei:bool, flags:str, cycles:list[int]):
         if ei:
-            self.ei_pending = True
+            self.ei_pending = 2
         else:
             self.ime = 0
         self.cycles += cycles[0]
@@ -747,10 +747,7 @@ class CPU():
                 self.flags.set_znhc(z,n,h,not c)
         self.cycles += cycles[0]
     def handle_instruction(self, opcode):
-        if self.ei_pending:
-            self.ime = 1
-            self.ei_pending = False
-
+        
         match opcode:
             case 0x00: #NOP
                 self.cycles += 4
@@ -1272,4 +1269,21 @@ class CPU():
         self.handle_instruction(instr)
         cycles_after = self.cycles
 
+        if self.ei_pending:
+            self.ei_pending -= 1
+            if self.ei_pending == 0:
+                self.ime = 1
+
         return cycles_after - cycles_before
+
+    def fire_interrupt(self, interrupt:int):
+        if self.ime:
+            self.ime = 0
+            self.push_int(self.pc.get())
+
+            handler_addr = 0x40 + (0x8*interrupt)
+            self.pc.set(handler_addr)
+            self.cycles += 20
+            return True
+        return False
+    

@@ -1,13 +1,13 @@
 from board.board import Motherboard
 
-mb = Motherboard("./cpu_instrs.gb")
-#mb = Motherboard("./b.gb")
+#mb = Motherboard("./cpu_instrs.gb")
+mb = Motherboard("./b.gb")
 
 running = True
 
 while running:
     try:
-        mb.mainloop(False)
+        mb.mainloop(True)
     except Exception as e:
         '''
         print("EXECUTION STOPPED")

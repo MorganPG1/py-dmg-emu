@@ -12,26 +12,27 @@ from memory.ram import RAM
 from cpu.cpu import CPU
 from cartridge.cart import Cart
 from time import sleep
-from debug.serial import Serial
+from board.io import IO
 class Motherboard():
     def __init__(self, romfile:str) -> None:
         self.pc_last = 0
-
+        self.cycles = 0
         cart = Cart(romfile)
-
+        
         ram = RAM(0x2000)
         hram = RAM(128)
         vram = RAM(0x2000)
         eram = RAM(0x2000)
-        serial = Serial()
+        self.io = IO()
         memory_map:dict[tuple[int,int], MemoryRegion] = {
             (0x0000, 0x8000): cart.getMBC(),
             (0x8000, 0xA000): vram,
             (0xA000, 0xC000): eram,
             (0xC000, 0xE000): ram,
             (0xE000, 0xFE00): ram,
-            (0xFF00, 0xFF80): serial,
+            (0xFF00, 0xFF80): self.io,
             (0xFF80, 0xFFFF): hram,
+            (0xFFFF, 0x10000): self.io.ie,
         }
 
         self.memory:MemoryController = MemoryController(memory_map)
@@ -56,7 +57,11 @@ class Motherboard():
             sp = self.cpu.registers["SP"].get()
             pc = self.cpu.registers["PC"].get()
             pcmem = self.memory.read(pc, 4)
-
+            ime = self.cpu.ime
+            intf = self.io.intf
+            div = self.io.div
+            tima = self.io.tima
+            en = self.io.timer_enabled
             string = f"A:{self.hexformat(a)} F:{self.hexformat(f)} B:{self.hexformat(b)} C:{self.hexformat(c)} D:{self.hexformat(d)} E:{self.hexformat(e)} H:{self.hexformat(h)} L:{self.hexformat(l)} SP:{self.hexformat2b(sp)} PC:{self.hexformat2b(pc)} PCMEM:"
             for i,byte in enumerate(pcmem):
                 if i > 0:
@@ -64,7 +69,16 @@ class Motherboard():
                 else:
                     string += f"{self.hexformat(byte)}"
             print(string)
+        
+        int = self.io.check_int()
+        if int != -1:
+            #print(f"INT: {int}")
+                
+            if self.cpu.fire_interrupt(int):
+                self.io.int_ack(int)
+    
         cycles = self.cpu.step()
-
+        self.io.tick(cycles)
+        
         
         pass
