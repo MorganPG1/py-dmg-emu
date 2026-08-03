@@ -13,7 +13,7 @@ class RAM(MemoryRegion):
         if not isinstance(size, int):
             raise ValueError("Size must be an integer")
         
-        self.memory = bytearray([0xFF]*size)
+        self.memory = bytearray([0x00]*size)
 
     def read(self, offset: int, count: int) -> bytearray:
         #Validation

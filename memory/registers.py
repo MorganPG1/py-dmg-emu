@@ -127,9 +127,16 @@ class Register8b(Register):
         return val
 
 class FlagRegister(Register8b):
-    def set(self, value: int):
-        super().set(value)
-        self.val &= 0xF0
+    def __init__(self, initial_val: int = 0) -> None:
+        self.val_int = initial_val
+    @property
+    def val(self):
+        return self.val_int
+
+    @val.setter
+    def val(self, new_val):
+        self.val_int = new_val & 0xF0
+
     def inc(self) -> bool:
         raise NotImplementedError("INC/DEC/GETI/GETD not implemented for the flag register.")
     def dec(self) -> bool:

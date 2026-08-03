@@ -360,9 +360,9 @@ class CPU():
                 handler(operand, is_hl)
             case 1: #BIT
                 val = operand.get()
-                z = (val >> bit_ind) & 1
+                z = not ((val >> bit_ind) & 1)
                 n = 0
-                h = 0
+                h = 1
                 c = self.flags.get_c()
                 self.flags.set_znhc(z,n,h,c)
 
@@ -604,9 +604,10 @@ class CPU():
         z = self.flags.get_z()
         n = 0
         h = ((res & 0xFFF) < (a & 0xFFF))
-        c = (res < a)
-        self.flags.set_znhc(z,n,h,c)
+        c = (res > 0xFFFF)
 
+        hl.set(res)
+        self.flags.set_znhc(z,n,h,c)
         self.cycles += cycles[0]
     def handle_ret(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         cond = self.conditionals[(opcode >> 3) & 0b11]
@@ -708,22 +709,20 @@ class CPU():
                 h = self.flags.get_h()
                 c = self.flags.get_c()
 
-                adj = 0
-
+                result = val
                 if s:
-                    adj += 0x6 if h else 0
-                    adj += 0x60 if c else 0
-                    result = (val - adj) & 0xFF
-                    a.set(result)
+                    result -= 0x6 if h else 0
+                    result -= 0x60 if c else 0
+                    result = result & 0xFF
                 else:
-                    adj += 0x6 if h or ((val & 0xF) > 0x9) else 0
+                    result += 0x6 if h or ((val & 0xF) > 0x9) else 0
 
-                    if c or val > 0x99:
-                        adj += 0x60
+                    if c or result > 0x9F:
+                        result += 0x60
                         c = 1
 
-                    result = (val + adj) & 0xFF
-                    a.set(result)
+                    result = result & 0xFF
+                a.set(result)
                 z = result == 0
                 self.flags.set_znhc(z, s, 0, c)
             case 5: #CPL

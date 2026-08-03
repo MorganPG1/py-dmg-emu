@@ -22,7 +22,7 @@ class Cart():
         self.rom = rom
         self.title = self.rom[0x134:0x13F].decode()
 
-        mbc = self.rom[147]
+        mbc = self.rom[0x147]
 
         if mbc in MBC_CONTROLLERS:
             self.mbc = MBC_CONTROLLERS[mbc](self.rom)
