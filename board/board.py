@@ -70,15 +70,8 @@ class Motherboard():
                     string += f"{self.hexformat(byte)}"
             print(string)
         
-        int = self.io.check_int()
-        if int != -1:
-            #print(f"INT: {int}")
-                
-            if self.cpu.fire_interrupt(int):
-                self.io.int_ack(int)
     
         cycles = self.cpu.step()
-        self.io.tick(cycles)
         
         
         pass
