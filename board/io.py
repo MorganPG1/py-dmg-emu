@@ -5,10 +5,53 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from board.board import Motherboard
 
+class Timer():
+    def __init__(self) -> None:
+        self.tima = 0
+        self.div = 0
+        self.tma = 0
+        self.tac = 0
+        self.cycles = 0
+        pass
+    def get_timer_freq(self) -> int:
+        frq = self.tac & 0b11
+        match frq:
+            case 0:
+                return 1024
+            case 1:
+                return 16
+            case 2:
+                return 64
+            case 3:
+                return 256
+        return 1024
+    def inc_div(self):
+        self.div = (self.div + 1) & 0xFF
+    def inc_timer(self) -> bool:
+        self.tima += 1
+        if self.tima > 0xFF:
+            self.tima = self.tma
+            return True
+        return False
+    
+    def step(self, cycles) -> bool:
+        #Div: every 256 T cycles
+        total_c = self.cycles
+        cycles_for_t = self.get_timer_freq() 
+        irq = False
+        for c in range(cycles):
+            total_c += 1
+            if (total_c % 256) == 0:
+                self.inc_div()
+            if (total_c % cycles_for_t) == 0:
+                irq = True if self.inc_timer() else irq
+        return irq
+    
 class IO(MemoryRegion):
     def __init__(self, board:Motherboard, debug:bool=False) -> None:
         self.board = board
         self.debug = debug
+        self.timer = Timer()
         self.buffer = 0
         self.read_buff = bytearray([
             # $FF00 - $FF0F: System & Timers
@@ -59,21 +102,28 @@ class IO(MemoryRegion):
         count = len(buffer)
         cpu = self.board.cpu
         for addr in range(offset, offset+count):
+            val = buffer.pop(0)
             if (addr & 0x80) and addr != 0xFF:
-                self.hram[addr - 0x80] = buffer.pop(0)
+                self.hram[addr - 0x80] = val
             else:
                 match addr:
                     case 0x01:
-                        self.buffer = buffer.pop(0)
+                        self.buffer = val
                     case 0x02:
-                        v = buffer.pop(0)
-                        if v & 0x80 and not self.debug:
+                        if val & 0x80 and not self.debug:
                             print(chr(self.buffer), end="", flush=True)
-                            
+                    case 0x04:
+                        self.timer.div = 0
+                    case 0x05:
+                        self.timer.tima = 0
+                    case 0x06:
+                        self.timer.tma = val
+                    case 0x07:
+                        self.timer.tac = val
                     case 0x0F:
-                        cpu.intf = buffer.pop(0)
+                        cpu.intf = val
                     case 0xFF:
-                        cpu.ie = buffer.pop(0)
+                        cpu.ie = val
 
     def read(self, offset: int, count: int) -> bytearray:
         buff = bytearray()
@@ -83,6 +133,14 @@ class IO(MemoryRegion):
                 buff.append(self.hram[addr - 0x80])
             elif addr != 0xFF:
                 match addr:
+                    case 0x04:
+                        buff.append(self.timer.div)
+                    case 0x05:
+                        buff.append(self.timer.tima)
+                    case 0x06:
+                        buff.append(self.timer.tma)
+                    case 0x07:
+                        buff.append(self.timer.tac)
                     case 0x0F:
                         buff.append(cpu.intf)
                     case _:
@@ -91,4 +149,6 @@ class IO(MemoryRegion):
                 buff.append(cpu.ie)
 
         return buff
-        
+
+    def step(self, cycles) -> bool:
+        return self.timer.step(cycles)
