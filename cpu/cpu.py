@@ -101,7 +101,18 @@ class CPU():
     def int_to_bytearray(self, integer:int) -> bytearray:
         return bytearray(integer.to_bytes(2, byteorder='little'))
     
-    
+    def call(self, addr:int):
+        pc = self.pc
+
+        curr_addr = pc.get()
+        self.push_int(curr_addr)
+
+        pc.set(addr)
+
+    def jump(self, addr:int):
+        pc = self.pc
+        pc.set(addr)
+
     def read_next(self, count:int) -> bytearray:
         '''
         Reads the next count bytes and updates the PC accordingly.
