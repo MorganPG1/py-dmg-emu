@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 class IO(MemoryRegion):
     def __init__(self, board:Motherboard, debug:bool=False) -> None:
-        self.cpu = board.cpu
+        self.board = board
         self.debug = debug
         self.buffer = 0
         self.read_buff = bytearray([
@@ -57,6 +57,7 @@ class IO(MemoryRegion):
 
     def write(self, offset: int, buffer: bytearray) -> None:
         count = len(buffer)
+        cpu = self.board.cpu
         for addr in range(offset, offset+count):
             if (addr & 0x80) and addr != 0xFF:
                 self.hram[addr] = buffer.pop(0)
@@ -70,24 +71,24 @@ class IO(MemoryRegion):
                             print(chr(self.buffer), end="", flush=True)
                             
                     case 0x0F:
-                        self.cpu.intf = buffer.pop(0)
+                        cpu.intf = buffer.pop(0)
                     case 0xFF:
-                        self.cpu.ie = buffer.pop(0)
+                        cpu.ie = buffer.pop(0)
 
     def read(self, offset: int, count: int) -> bytearray:
         buff = bytearray()
-
+        cpu = self.board.cpu
         for addr in range(offset, offset+count):
             if (addr & 0x80) and addr != 0xFF:
                 buff.append(self.hram[addr])
             elif addr != 0xFF:
                 match addr:
                     case 0x0F:
-                        self.cpu.intf
+                        buff.append(cpu.intf)
                     case _:
                         buff.append(self.read_buff[addr])
             else:
-                buff.append(self.cpu.ie)
+                buff.append(cpu.ie)
 
         return buff
         

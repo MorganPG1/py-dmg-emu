@@ -18,7 +18,6 @@ class Motherboard():
         self.pc_last = 0
         self.cycles = 0
         self.debug = debug
-        self.cpu = CPU(self)
         cart = Cart(romfile)
         
         ram = RAM(0x2000)
@@ -35,7 +34,7 @@ class Motherboard():
         }
 
         self.memory:MemoryController = MemoryController(memory_map)
-        
+        self.cpu = CPU(self)
 
         pass
 
