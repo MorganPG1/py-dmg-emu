@@ -6,8 +6,9 @@ if TYPE_CHECKING:
     from board.board import Motherboard
 
 class IO(MemoryRegion):
-    def __init__(self, board:Motherboard) -> None:
+    def __init__(self, board:Motherboard, debug:bool=False) -> None:
         self.cpu = board.cpu
+        self.debug = debug
         self.buffer = 0
         self.read_buff = bytearray([
             # $FF00 - $FF0F: System & Timers
@@ -53,7 +54,7 @@ class IO(MemoryRegion):
         self.cycle_timer0 = 0
         self.cycle_timer1 = 0
         self.cycle_timer2 = 0
-        
+
     def write(self, offset: int, buffer: bytearray) -> None:
         count = len(buffer)
         for addr in range(offset, offset+count):
@@ -65,9 +66,9 @@ class IO(MemoryRegion):
                         self.buffer = buffer.pop(0)
                     case 0x02:
                         v = buffer.pop(0)
-                        if v & 0x80:
-                            #print(chr(self.buffer), end="", flush=True)
-                            pass
+                        if v & 0x80 and not self.debug:
+                            print(chr(self.buffer), end="", flush=True)
+                            
                     case 0x0F:
                         self.cpu.intf = buffer.pop(0)
                     case 0xFF:

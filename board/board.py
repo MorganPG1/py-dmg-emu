@@ -14,16 +14,17 @@ from cartridge.cart import Cart
 from time import sleep
 from board.io import IO
 class Motherboard():
-    def __init__(self, romfile:str) -> None:
+    def __init__(self, romfile:str, debug:bool=False) -> None:
         self.pc_last = 0
         self.cycles = 0
+        self.debug = debug
         cart = Cart(romfile)
         
         ram = RAM(0x2000)
         hram = RAM(128)
         vram = RAM(0x2000)
         eram = RAM(0x2000)
-        self.io = IO()
+        self.io = IO(self, debug)
         memory_map:dict[tuple[int,int], MemoryRegion] = {
             (0x0000, 0x8000): cart.getMBC(),
             (0x8000, 0xA000): vram,
@@ -43,8 +44,8 @@ class Motherboard():
         return hex(val)[2:].rjust(2, "0").upper()
     def hexformat2b(self,val:int):
         return hex(val)[2:].rjust(4, "0").upper()
-    def mainloop(self, debug:bool = False):
-        if debug:
+    def mainloop(self):
+        if self.debug:
             a = self.cpu.registers["A"].get()
             f = self.cpu.flags.get()
             b = self.cpu.registers["B"].get()
