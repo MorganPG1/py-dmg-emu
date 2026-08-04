@@ -43,8 +43,10 @@ class Timer():
             total_c += 1
             if (total_c % 256) == 0:
                 self.inc_div()
-            if (total_c % cycles_for_t) == 0:
+            if (total_c % cycles_for_t) == 0 and (self.tac & 0b100):
                 irq = True if self.inc_timer() else irq
+
+        self.cycles = total_c
         return irq
     
 class IO(MemoryRegion):

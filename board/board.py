@@ -74,5 +74,3 @@ class Motherboard():
         irq = self.io.step(cycles)
         if irq:
             self.cpu.fire_interrupt(2)
-            
-        pass
