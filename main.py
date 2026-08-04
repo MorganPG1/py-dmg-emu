@@ -1,9 +1,9 @@
 from board.board import Motherboard
 
 DEBUG = False
+CART = "./cpu_instrs.gb"
 
-#mb = Motherboard("./cpu_instrs.gb")
-mb = Motherboard("./b.gb", DEBUG)
+mb = Motherboard(CART, DEBUG)
 
 running = True
 
