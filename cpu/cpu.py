@@ -466,6 +466,8 @@ class CPU():
         hl_mem = self.registers_8b[6]
         if source is hl_mem and dest is hl_mem:
             self.halted = True
+            if (not self.ime) and ((self.ie & self.intf) & 0x1F) != 0:
+                self.halt_bug = True
 
         val = source.get()
         dest.set(val)
@@ -1402,19 +1404,17 @@ class CPU():
         
         for int in range(0,5):
             if ints & (1 << int):
-                
+                cycles = 20
+                if self.halted:
+                    self.halted = False
+                    cycles = 24    
 
-                if not self.ime and self.halted:
-                    self.halt_bug = True
-                elif self.ime:
+                if self.ime:
                     self.clear_interrupt(int)
                     handler = 0x40 + (0x8 * int)
                     self.call(handler)
 
-                self.ime = 0
-                if self.halted:
-                    self.halted = False
-                    return 24
-                #20 T-Cycles are used, this would be 24 if in halt but halt isnt emulated yet
-                return 20
+                    self.ime = 0
+                
+                    return cycles
         return 0
