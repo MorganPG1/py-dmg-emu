@@ -1,7 +1,13 @@
+from __future__ import annotations
 from memory.memory import MemoryRegion
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from board.board import Motherboard
 
 class IO(MemoryRegion):
-    def __init__(self) -> None:
+    def __init__(self, board:Motherboard) -> None:
+        self.cpu = board.cpu
         self.buffer = 0
         self.read_buff = bytearray([
             # $FF00 - $FF0F: System & Timers
@@ -36,6 +42,7 @@ class IO(MemoryRegion):
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         ])
+        self.hram = bytearray(0x7F)
         self.intf:int = 0
         self.div = 0
         self.tima = 0
@@ -55,4 +62,19 @@ class IO(MemoryRegion):
             pass
 
     def read(self, offset: int, count: int) -> bytearray:
-        return self.read_buff[offset:offset+count]
+        buff = bytearray()
+
+        for addr in range(offset, offset+count):
+            if (addr & 0x80) and addr != 0xFF:
+                buff.append(self.hram[addr])
+            elif addr != 0xFF:
+                match addr:
+                    case 0x0F:
+                        self.cpu.intf
+                    case _:
+                        buff.append(self.read_buff[addr])
+            else:
+                buff.append(self.cpu.ie)
+
+        return buff
+        
