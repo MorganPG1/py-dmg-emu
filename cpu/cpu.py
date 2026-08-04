@@ -9,6 +9,7 @@ https://rgbds.gbdev.io/docs/v1.0.3/gbz80.7#INSTRUCTION_REFERENCE
 https://gbdev.io/gb-opcodes/optables/
 https://gbdev.io/pandocs/CPU_Registers_and_Flags.html
 https://gbdev.io/pandocs/CPU_Instruction_Set.html
+https://gbdev.io/pandocs/Interrupts.html
 '''
 from __future__ import annotations
 from typing import TYPE_CHECKING
@@ -91,6 +92,9 @@ class CPU():
         }
 
         self.ime = 0
+        self.intf = 0
+        self.ie = 0
+
         self.ei_pending = 0
     def bytearray_to_int(self, ba:bytearray) -> int:
         return int.from_bytes(ba, 'little')
@@ -1337,23 +1341,7 @@ class CPU():
 
         return cycles_after - cycles_before
 
-    def fire_interrupt(self, interrupt:int) -> bool:
-        '''
-        Fires an interrupt
+    def fire_interrupt(self, interrupt:int):
+        self.intf |= (1 << interrupt)
 
-        :param self: The CPU object
-        :param interrupt: The interrupt to fire (0 = VBlank, 1 = LCD,...)
-        :type interrupt: int
-        :return: If the interrupt was processed
-        :rtype: bool
-        '''
-        if self.ime:
-            self.ime = 0
-            self.push_int(self.pc.get())
-
-            handler_addr = 0x40 + (0x8*interrupt)
-            self.pc.set(handler_addr)
-            self.cycles += 20
-            return True
-        return False
     
