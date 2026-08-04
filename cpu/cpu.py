@@ -1348,13 +1348,33 @@ class CPU():
         return cycles_after - cycles_before
 
     def fire_interrupt(self, interrupt:int):
+        '''
+        Fires an interrupt (sets the corresponding bit in IF)
+
+        :param self: The CPU object
+        :param interrupt: The interrupt to fire (0=VBLANK, 1=LCD, 2=TIMER, 3=SERIAL, 4=JOYPAD)
+        :type interrupt: int
+        '''
         self.intf |= (1 << interrupt)
 
     def clear_interrupt(self, interrupt:int):
+        '''
+        Clears an interrupt (clears the corresponding bit in IF)
+
+        :param self: The CPU object
+        :param interrupt: The interrupt to clear (0=VBLANK, 1=LCD, 2=TIMER, 3=SERIAL, 4=JOYPAD)
+        :type interrupt: int
+        '''
         self.intf &= ~(1 << interrupt)
 
     def check_interrupt(self) -> int:
-        
+        '''
+        Checks if any interrupts need to be handled and handles them if necessary
+
+        :param self: The CPU object
+        :return: The number of T-Cycles used during the process
+        :rtype: int
+        '''
         if self.ime:
             ints = self.ie & self.intf #Only get interrupts that are enabled and active
             
