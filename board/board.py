@@ -21,7 +21,6 @@ class Motherboard():
         cart = Cart(romfile)
         
         ram = RAM(0x2000)
-        hram = RAM(128)
         vram = RAM(0x2000)
         eram = RAM(0x2000)
         self.io = IO(self, debug)
@@ -31,8 +30,7 @@ class Motherboard():
             (0xA000, 0xC000): eram,
             (0xC000, 0xE000): ram,
             (0xE000, 0xFE00): ram,
-            (0xFF00, 0xFF80): self.io,
-            (0xFF80, 0xFFFF): hram,
+            (0xFF00, 0x10000): self.io,
         }
 
         self.memory:MemoryController = MemoryController(memory_map)
