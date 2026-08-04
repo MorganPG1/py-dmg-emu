@@ -714,7 +714,7 @@ class CPU():
         addr = ((opcode >> 3) & 0b111) * 8
 
         self.call(addr)
-        
+
         self.cycles += cycles[0]
 
     def handle_int_control(self, opcode:int, ei:bool, flags:str, cycles:list[int]):
@@ -1350,4 +1350,22 @@ class CPU():
     def fire_interrupt(self, interrupt:int):
         self.intf |= (1 << interrupt)
 
-    
+    def clear_interrupt(self, interrupt:int):
+        self.intf &= ~(1 << interrupt)
+
+    def check_interrupt(self) -> int:
+        
+        if self.ime:
+            ints = self.ie & self.intf #Only get interrupts that are enabled and active
+            
+            for int in range(0,5):
+                if ints & (1 << int):
+                    self.ime = 0
+                    self.clear_interrupt(int)
+
+                    handler = 0x40 + (0x8 * int)
+                    self.call(handler)
+
+                    #20 T-Cycles are used, this would be 24 if in halt but halt isnt emulated yet
+                    return 20
+        return 0
