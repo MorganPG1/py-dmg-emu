@@ -96,6 +96,9 @@ class CPU():
         self.ie = 0
 
         self.ei_pending = 0
+
+        self.halted = False
+        self.halt_bug = False
     def bytearray_to_int(self, ba:bytearray) -> int:
         return int.from_bytes(ba, 'little')
     def int_to_bytearray(self, integer:int) -> bytearray:
@@ -127,7 +130,7 @@ class CPU():
         pc = self.pc
         pc.set(addr)
 
-    def read_next(self, count:int) -> bytearray:
+    def read_next(self, count:int, no_update:bool=False) -> bytearray:
         '''
         Reads the next count bytes and updates the PC accordingly.
 
@@ -141,7 +144,9 @@ class CPU():
         addr = pc.val
 
         data = self.board.memory.read(addr, count)
-        pc.val = (addr + count)
+
+        if not no_update:
+            pc.val = (addr + count)
 
         return data
 
@@ -460,7 +465,7 @@ class CPU():
         dest = self.registers_8b[(opcode >> 3) & 0b111]
         hl_mem = self.registers_8b[6]
         if source is hl_mem and dest is hl_mem:
-            raise Exception("HALT")
+            self.halted = True
 
         val = source.get()
         dest.set(val)
@@ -1346,21 +1351,24 @@ class CPU():
         :return: The number of T-Cycles needed for the instruction
         :rtype: int
         '''
-        instr = self.read_next(1)[0]
+        if not self.halted:
+            instr = self.read_next(1, self.halt_bug)[0]
 
-        cycles_before = self.cycles
-        self.handle_instruction(instr)
-        cycles_after = self.cycles
+            if self.halt_bug:
+                self.halt_bug = False
 
-        #FFR: i have got no clue if this is correct, but i think it is?
-        #i need to review the EI logic in future
-        if self.ei_pending:
-            self.ei_pending -= 1
-            if self.ei_pending == 0:
-                self.ime = 1
+            cycles_before = self.cycles
+            self.handle_instruction(instr)
+            cycles_after = self.cycles
 
-        return cycles_after - cycles_before
-
+            #FFR: i have got no clue if this is correct, but i think it is?
+            #i need to review the EI logic in future
+            if self.ei_pending:
+                self.ei_pending -= 1
+                if self.ei_pending == 0:
+                    self.ime = 1
+            return cycles_after - cycles_before
+        return 4
     def fire_interrupt(self, interrupt:int):
         '''
         Fires an interrupt (sets the corresponding bit in IF)
@@ -1389,17 +1397,24 @@ class CPU():
         :return: The number of T-Cycles used during the process
         :rtype: int
         '''
-        if self.ime:
-            ints = self.ie & self.intf #Only get interrupts that are enabled and active
-            
-            for int in range(0,5):
-                if ints & (1 << int):
-                    self.ime = 0
-                    self.clear_interrupt(int)
+    
+        ints = self.ie & self.intf #Only get interrupts that are enabled and active
+        
+        for int in range(0,5):
+            if ints & (1 << int):
+                
 
+                if not self.ime and self.halted:
+                    self.halt_bug = True
+                elif self.ime:
+                    self.clear_interrupt(int)
                     handler = 0x40 + (0x8 * int)
                     self.call(handler)
 
-                    #20 T-Cycles are used, this would be 24 if in halt but halt isnt emulated yet
-                    return 20
+                self.ime = 0
+                if self.halted:
+                    self.halted = False
+                    return 24
+                #20 T-Cycles are used, this would be 24 if in halt but halt isnt emulated yet
+                return 20
         return 0
