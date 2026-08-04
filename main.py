@@ -2,6 +2,7 @@ from board.board import Motherboard
 
 DEBUG = False
 CART = "./cpu_instrs.gb"
+#CART = "./a.gb"
 
 mb = Motherboard(CART, DEBUG)
 

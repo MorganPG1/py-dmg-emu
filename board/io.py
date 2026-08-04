@@ -43,7 +43,7 @@ class IO(MemoryRegion):
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         ])
-        self.hram = bytearray(0x7F)
+        self.hram = bytearray([0xFF]*0x7F)
         self.intf:int = 0
         self.div = 0
         self.tima = 0
@@ -60,7 +60,7 @@ class IO(MemoryRegion):
         cpu = self.board.cpu
         for addr in range(offset, offset+count):
             if (addr & 0x80) and addr != 0xFF:
-                self.hram[addr] = buffer.pop(0)
+                self.hram[addr - 0x80] = buffer.pop(0)
             else:
                 match addr:
                     case 0x01:
@@ -80,7 +80,7 @@ class IO(MemoryRegion):
         cpu = self.board.cpu
         for addr in range(offset, offset+count):
             if (addr & 0x80) and addr != 0xFF:
-                buff.append(self.hram[addr])
+                buff.append(self.hram[addr - 0x80])
             elif addr != 0xFF:
                 match addr:
                     case 0x0F:
