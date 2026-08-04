@@ -70,6 +70,9 @@ class Motherboard():
         
         cycles = self.cpu.check_interrupt()
         cycles += self.cpu.step()
-        
-        
+
+        irq = self.io.step(cycles)
+        if irq:
+            self.cpu.fire_interrupt(2)
+            
         pass

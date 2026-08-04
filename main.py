@@ -1,6 +1,6 @@
 from board.board import Motherboard
 
-DEBUG = True
+DEBUG = False
 #CART = "./cpu_instrs.gb"
 CART = "./b.gb"
 
