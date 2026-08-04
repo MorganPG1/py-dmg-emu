@@ -701,25 +701,20 @@ class CPU():
     def handle_call_imm16(self, opcode:int, is_conditional:bool, flags:str, cycles:list[int]):
         addr = self.bytearray_to_int(self.read_next(2))
         cond = self.conditionals[(opcode >> 3) & 0b11]
-        pc = self.pc
 
         if is_conditional and not cond.evaluate():
             self.cycles += cycles[1]
             return
 
-        curr_addr = pc.get()
-        self.push_int(curr_addr)
-        pc.set(addr)
+        self.call(addr)
 
         self.cycles += cycles[0]
     def handle_rst(self, opcode:int, flags:str, cycles:list[int]):
         pc = self.pc
         addr = ((opcode >> 3) & 0b111) * 8
 
-        curr_addr = pc.get()
-        self.push_int(curr_addr)
-
-        pc.set(addr)
+        self.call(addr)
+        
         self.cycles += cycles[0]
 
     def handle_int_control(self, opcode:int, ei:bool, flags:str, cycles:list[int]):
