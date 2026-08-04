@@ -102,6 +102,13 @@ class CPU():
         return bytearray(integer.to_bytes(2, byteorder='little'))
     
     def call(self, addr:int):
+        '''
+        Calls an address (pushes return address onto stack and then jumps to addr)
+
+        :param self: The CPU object
+        :param addr: The address to call
+        :type addr: int
+        '''
         pc = self.pc
 
         curr_addr = pc.get()
@@ -110,6 +117,13 @@ class CPU():
         pc.set(addr)
 
     def jump(self, addr:int):
+        '''
+        Jumps to an address
+
+        :param self: The CPU object
+        :param addr: The address to jump to
+        :type addr: int
+        '''
         pc = self.pc
         pc.set(addr)
 
