@@ -53,13 +53,25 @@ class IO(MemoryRegion):
         self.cycle_timer0 = 0
         self.cycle_timer1 = 0
         self.cycle_timer2 = 0
+        
     def write(self, offset: int, buffer: bytearray) -> None:
-        if offset == 0x01:
-            self.buffer = buffer[0]
-        if offset == 0x02 and buffer[0] == 0x81:
-            #print(chr(self.buffer), end="", flush=True)
-            #print(f"SERIAL WRITE: {hex(self.buffer)}")
-            pass
+        count = len(buffer)
+        for addr in range(offset, offset+count):
+            if (addr & 0x80) and addr != 0xFF:
+                self.hram[addr] = buffer.pop(0)
+            else:
+                match addr:
+                    case 0x01:
+                        self.buffer = buffer.pop(0)
+                    case 0x02:
+                        v = buffer.pop(0)
+                        if v & 0x80:
+                            #print(chr(self.buffer), end="", flush=True)
+                            pass
+                    case 0x0F:
+                        self.cpu.intf = buffer.pop(0)
+                    case 0xFF:
+                        self.cpu.ie = buffer.pop(0)
 
     def read(self, offset: int, count: int) -> bytearray:
         buff = bytearray()
