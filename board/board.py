@@ -68,8 +68,8 @@ class Motherboard():
                     string += f"{self.hexformat(byte)}"
             print(string)
         
-    
-        cycles = self.cpu.step()
+        cycles = self.cpu.check_interrupt()
+        cycles += self.cpu.step()
         
         
         pass
