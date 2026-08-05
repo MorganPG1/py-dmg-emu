@@ -13,6 +13,7 @@ from cpu.cpu import CPU
 from cartridge.cart import Cart
 from time import sleep
 from board.io import IO
+from board.ppu import PPU
 class Motherboard():
     def __init__(self, romfile:str, debug:bool=False) -> None:
         self.pc_last = 0
@@ -24,6 +25,7 @@ class Motherboard():
         vram = RAM(0x2000)
         eram = RAM(0x2000)
         self.io = IO(self, debug)
+        self.ppu = PPU()
         memory_map:dict[tuple[int,int], MemoryRegion] = {
             (0x0000, 0x8000): cart.getMBC(),
             (0x8000, 0xA000): vram,

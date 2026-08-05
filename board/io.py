@@ -103,6 +103,7 @@ class IO(MemoryRegion):
     def write(self, offset: int, buffer: bytearray) -> None:
         count = len(buffer)
         cpu = self.board.cpu
+        ppu = self.board.ppu
         for addr in range(offset, offset+count):
             val = buffer.pop(0)
             if (addr & 0x80) and addr != 0xFF:
@@ -124,12 +125,19 @@ class IO(MemoryRegion):
                         self.timer.tac = val
                     case 0x0F:
                         cpu.intf = val
+                    case 0x40:
+                        ppu.lcdc = val
+                    case 0x41:
+                        ppu.stat = val
+                    case 0x45:
+                        ppu.lyc = val
                     case 0xFF:
                         cpu.ie = val
 
     def read(self, offset: int, count: int) -> bytearray:
         buff = bytearray()
         cpu = self.board.cpu
+        ppu = self.board.ppu
         for addr in range(offset, offset+count):
             if (addr & 0x80) and addr != 0xFF:
                 buff.append(self.hram[addr - 0x80])
@@ -145,6 +153,14 @@ class IO(MemoryRegion):
                         buff.append(self.timer.tac)
                     case 0x0F:
                         buff.append(cpu.intf)
+                    case 0x40:
+                        buff.append(ppu.lcdc)
+                    case 0x41:
+                        buff.append(ppu.stat)
+                    case 0x44:
+                        buff.append(ppu.ly)
+                    case 0x45:
+                        buff.append(ppu.lyc)
                     case _:
                         buff.append(self.read_buff[addr])
             else:
