@@ -1355,10 +1355,8 @@ class CPU():
         '''
         if not self.halted:
             instr = self.read_next(1, self.halt_bug)[0]
-
-            if self.halt_bug:
-                self.halt_bug = False
-
+            if self.halt_bug: self.halt_bug = False
+            
             cycles_before = self.cycles
             self.handle_instruction(instr)
             cycles_after = self.cycles

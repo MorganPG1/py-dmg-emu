@@ -60,14 +60,17 @@ class Motherboard():
             div = self.io.div
             tima = self.io.tima
             en = self.io.timer_enabled
+            halt_bug = self.cpu.halt_bug
+            ime = self.cpu.ime
             string = f"A:{self.hexformat(a)} F:{self.hexformat(f)} B:{self.hexformat(b)} C:{self.hexformat(c)} D:{self.hexformat(d)} E:{self.hexformat(e)} H:{self.hexformat(h)} L:{self.hexformat(l)} SP:{self.hexformat2b(sp)} PC:{self.hexformat2b(pc)} PCMEM:"
             for i,byte in enumerate(pcmem):
                 if i > 0:
                     string += f",{self.hexformat(byte)}"
                 else:
                     string += f"{self.hexformat(byte)}"
+            string += f"IME: {ime} HALT_BUG: {halt_bug}"
             print(string)
-        
+                    
         cycles = self.cpu.check_interrupt()
         cycles += self.cpu.step()
 
