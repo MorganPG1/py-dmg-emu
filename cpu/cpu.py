@@ -466,7 +466,7 @@ class CPU():
         hl_mem = self.registers_8b[6]
         if source is hl_mem and dest is hl_mem:
             self.halted = True
-            if (not self.ime) and ((self.ie & self.intf) & 0x1F) != 0:
+            if (not self.ime and not self.ei_pending) and ((self.ie & self.intf) & 0x1F) != 0:
                 self.halt_bug = True
 
         val = source.get()
@@ -1356,7 +1356,7 @@ class CPU():
         if not self.halted:
             instr = self.read_next(1, self.halt_bug)[0]
             if self.halt_bug: self.halt_bug = False
-            
+
             cycles_before = self.cycles
             self.handle_instruction(instr)
             cycles_after = self.cycles
