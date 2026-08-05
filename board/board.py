@@ -19,19 +19,22 @@ class Motherboard():
         self.pc_last = 0
         self.cycles = 0
         self.debug = debug
-        cart = Cart(romfile)
-        
-        ram = RAM(0x2000)
-        vram = RAM(0x2000)
-        eram = RAM(0x2000)
-        self.io = IO(self, debug)
         self.ppu = PPU()
+
+        cart = Cart(romfile)
+        ram = RAM(0x2000)
+        vram = self.ppu.vram
+        eram = RAM(0x2000)
+        oam = self.ppu.oam
+        self.io = IO(self, debug)
+        
         memory_map:dict[tuple[int,int], MemoryRegion] = {
             (0x0000, 0x8000): cart.getMBC(),
             (0x8000, 0xA000): vram,
             (0xA000, 0xC000): eram,
             (0xC000, 0xE000): ram,
             (0xE000, 0xFE00): ram,
+            (0xFE00, 0xFF00): oam,
             (0xFF00, 0x10000): self.io,
         }
 
@@ -77,5 +80,11 @@ class Motherboard():
         cycles += self.cpu.step()
 
         irq = self.io.step(cycles)
+        
         if irq:
             self.cpu.fire_interrupt(2)
+
+        irq = self.ppu.step(cycles)
+
+        if irq != -1:
+            self.cpu.fire_interrupt(irq)

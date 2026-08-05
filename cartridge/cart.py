@@ -29,7 +29,7 @@ class Cart():
         if mbc in MBC_CONTROLLERS:
             self.mbc = MBC_CONTROLLERS[mbc](self.rom)
         else:
-            self.mbc = MBC0(self.rom)
+            self.mbc = MBC1(self.rom)
             #raise NotImplementedError(f"MBC ({hex(mbc)}) unknown or not implemented. Load a different ROM and try again")
 
     def getMBC(self) -> MemoryRegion:
