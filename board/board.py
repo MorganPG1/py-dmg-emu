@@ -47,6 +47,11 @@ class Motherboard():
         return hex(val)[2:].rjust(2, "0").upper()
     def hexformat2b(self,val:int):
         return hex(val)[2:].rjust(4, "0").upper()
+    def stepIo(self, cycles:int):
+        irq = self.io.step(cycles)
+        if irq:
+            self.cpu.fire_interrupt(2)
+
     def mainloop(self):
         if self.debug:
             a = self.cpu.registers["A"].get()
@@ -78,13 +83,15 @@ class Motherboard():
             print(string)
                     
         cycles = self.cpu.check_interrupt()
-        cycles += self.cpu.step()
+        instr = self.cpu.fetch()
 
-        irq = self.io.step(cycles)
-        
-        if irq:
-            self.cpu.fire_interrupt(2)
+        cycles += 4
+        self.stepIo(cycles)
 
+        c =  self.cpu.execute(instr) - 4
+        self.stepIo(c)
+
+        cycles += c
         irqs = self.ppu.step(cycles)
 
         for irq in irqs:

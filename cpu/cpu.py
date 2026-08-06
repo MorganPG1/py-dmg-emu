@@ -1345,18 +1345,12 @@ class CPU():
             case 0xFF: #RST $38
                 self.handle_rst(opcode, flags='----', cycles=[16])
 
-    def step(self) -> int:
-        '''
-        Fetches, decodes and executes one instruction
-
-        :param self: The CPU object
-        :return: The number of T-Cycles needed for the instruction
-        :rtype: int
-        '''
+    def fetch(self) -> int:
+        i = self.read_next(1, self.halt_bug)[0]
+        if self.halt_bug: self.halt_bug = False
+        return i
+    def execute(self, instr:int) -> int:
         if not self.halted:
-            instr = self.read_next(1, self.halt_bug)[0]
-            if self.halt_bug: self.halt_bug = False
-
             cycles_before = self.cycles
             self.handle_instruction(instr)
             cycles_after = self.cycles

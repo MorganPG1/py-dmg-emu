@@ -44,10 +44,11 @@ class Timer():
                 irq = True if self.timer_tick() else irq
 
             self.prev_signal = bit
+            self.master_counter = mc
 
         return irq            
     def get_timer_freq(self):
-        match self.tac:
+        match (self.tac & 0b11):
             case 0:
                 return 1024
             case 1:
