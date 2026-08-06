@@ -129,8 +129,16 @@ class IO(MemoryRegion):
                         ppu.lcdc = val
                     case 0x41:
                         ppu.stat = val
+                    case 0x42:
+                        ppu.scy = val
+                    case 0x43:
+                        ppu.scx = val
                     case 0x45:
                         ppu.lyc = val
+                    case 0x46:
+                        addr = (val << 8) & 0xDF00
+                        data = self.board.memory.read(addr, 0xA0)
+                        self.board.ppu.oam.write(0, data, True)
                     case 0xFF:
                         cpu.ie = val
 

@@ -28,10 +28,15 @@ import time
 import pygame
 SCREEN_W = 160
 SCREEN_H = 144
-
+PALETTE = (
+    (255,255,255),
+    (211,211,211),
+    (169,169,169),
+    (0,0,0),
+)
 class VRAM(MemoryRegion):
     def __init__(self) -> None:
-        self.b = bytearray(0x1000)
+        self.b = bytearray(0x2000)
 
     def read(self, offset: int, count: int, is_ppu:bool=False) -> bytearray:
         #TODO: implement VRAM inaccessibility
@@ -65,6 +70,8 @@ class PPU():
         self.lyc = 0
         self.stat = 0
         self.cycles = 0
+        self.scx = 0
+        self.scy = 0
         self.mode = -1 #-1 = disabled, 2 = search for OBJ, 3 = send pixels, 0 = wait for scanline, 1 = wait for frame
         self.objs_on_line = []
         self.mode2_handler_run= False
@@ -76,7 +83,6 @@ class PPU():
         #0 = 204 T-Cycles (again can vary but easier to fix)
         #1 = 4560 T-Cycles
         pass
-
     def scan(self, obj_size, obj_en):
         if not obj_en: return
 
@@ -85,26 +91,97 @@ class PPU():
             start_addr = 4 * obj
             y = oam_d[start_addr]
             x = oam_d[start_addr + 1]
-            ind = oam_d[start_addr + 1]
-            attr = oam_d[start_addr + 1]
-            if (x!=0) or (y!=0) or (ind!=0) or (attr!=0):
-                print(y,x,ind,attr)
+            ind = oam_d[start_addr + 2]
+            attr = oam_d[start_addr + 3]
             start_line = y - 16
             if obj_size: #8x16
-                if start_line <= self.ly < start_line + 16:
-                    self.objs_on_line.append((x, y, ind, attr))
+                if (start_line) <= self.ly < (start_line + 16):
+                    self.objs_on_line.append((obj_size,x, y, ind, attr))
             else:
-                if start_line <= self.ly < start_line + 8:
-                    self.objs_on_line.append((x, y, ind, attr))
+                if (start_line) <= self.ly < (start_line + 8):
+                    self.objs_on_line.append((obj_size,x, y, ind, attr))
 
-        if len(self.objs_on_line) > 0:
-            print(self.objs_on_line)
+            if len(self.objs_on_line) >= 10:
+                break
+
         pass
 
-    def render_scanline(self):
+    def get_pixel_2bpp(self, vram:bytearray, tile_addr:int, row:int, column:int, h_flip:bool=False):
+        b1 = vram[tile_addr + (row * 2)]
+        b2 = vram[tile_addr + (row * 2) + 1]
+
+        bitpos = column if h_flip else 7 - column
+
+        bit0 = (b1 >> bitpos) & 0x01
+        bit1 = (b2 >> bitpos) & 0x01
+
+        pxl = (bit1 << 1) | bit0
+        return pxl
+
+    def render_scanline(self, bg_en, bg_tile_map_area, bg_data_area):
+        tm = 0x1C00 if bg_tile_map_area else 0x1800
+        line = self.fb[self.ly]
+        vram_data = self.vram.read(0, 0x2000, True)        
+        bg_y = (self.ly + self.scy) & 0xFF
+        row = bg_y % 8
+        for i in range(160):
+            if bg_en:
+                bg_x = (i + self.scx) & 0xFF
+
+                offset = tm + ((bg_y // 8) * 32) + (bg_x // 8) 
+                ind = vram_data[offset]
+
+                if bg_data_area:
+                    tile_addr = ind * 16
+                else:
+                    if ind > 127 : ind -= 256
+                    tile_addr = 0x1000 + (ind * 16)
+
+                column = bg_x % 8
+
+                b1 = vram_data[tile_addr + (row * 2)]
+                b2 = vram_data[tile_addr + (row * 2) + 1]
+
+                bitpos = 7 - column
+
+                bit0 = (b1 >> bitpos) & 0x01
+                bit1 = (b2 >> bitpos) & 0x01
+
+                pxl = (bit1 << 1) | bit0
+                line[i] = PALETTE[pxl]
+            else:
+                line[i] = PALETTE[0]
+
+        
+        for obj in self.objs_on_line:
+            x = obj[1]-8
+
+            y = obj[2]-16
+            ind = obj[3] * 16            
+            attr = obj[4]
+            bank = attr & 0b1000
+            priority = attr & 0b1000000
+            x_flip = attr & 0b100000
+
+            if bank: ind += 0x400
+            row = self.ly-y
+
+            for tx in range(8):
+                scr_x = x + tx
+
+                if scr_x < 0 or scr_x >= 160:
+                    continue
+
+                pxl = self.get_pixel_2bpp(vram_data, ind, row, tx, x_flip)
+                #print(ind, row, column)
+                if pxl == 0:
+                    continue
+
+                self.fb[self.ly, scr_x] = PALETTE[pxl]
         pass
 
     def step(self, cycles:int) -> int:
+        
         lcd_en = self.lcdc & 0x80
         window_en = self.lcdc & 0x20
         bg_data_area = self.lcdc & 0x10
@@ -123,14 +200,17 @@ class PPU():
                 match self.mode:
                     case 2:
                         if not self.mode2_handler_run:
+                            self.objs_on_line = []
                             self.scan(obj_size, obj_en)
+                            self.mode2_handler_run = True
                         if self.cycles >= 80:
                             self.cycles = 0
                             self.mode = 3
                             self.mode2_handler_run = False
                     case 3:
                         if not self.mode3_handler_run:
-                            self.render_scanline()
+                            self.render_scanline(bg_en, bg_tile_map_area, bg_data_area)
+                            self.mode3_handler_run = True
                         if self.cycles >= 172:
                             self.cycles = 0
                             self.mode = 0
@@ -154,8 +234,16 @@ class PPU():
                             self.last_vblank = c
                             self.ly = 0
                             self.mode = 2
-                            self.objs_on_line = []
+
+                            surface_array = np.transpose(self.fb, (1, 0, 2))
+                            pygame.surfarray.blit_array(self.pg, surface_array)
                             pygame.display.update()
+
+                            events = pygame.event.get()
+                            for event in events:
+                                if event == pygame.QUIT:
+                                    exit()
+                            self.fb.fill(0)
         else:
             self.cycles = 0
             self.ly = 0
