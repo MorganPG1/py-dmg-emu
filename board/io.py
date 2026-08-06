@@ -5,55 +5,58 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from board.board import Motherboard
 
+BIT_INDEXES = (
+    9, #FREQ 0 - bit 9 high (1024 T-Cycles)
+    3, #FREQ 1 - bit 3 high (16 T-Cycles)
+    5, #FREQ 2 - bit 5 high (64 T-Cycles)
+    7  #FREQ 3 - bit 7 high (256 T-Cycles)
+)
 class Timer():
     def __init__(self) -> None:
         self.tima = 0
         self.div = 0
-        self.tma = 0
         self.tac = 0
-        self.cycles_t = 0
-        self.cycles_d = 0
-        pass
-    def get_timer_freq(self) -> int:
-        frq = self.tac & 0b11
-        match frq:
-            case 0:
-                return 1024 # 1024 t cycles
-            case 1:
-                return 16 # 16 t cycles
-            case 2:
-                return 64 # 64 t cycles
-            case 3:
-                return 256 # 256 t cycles
-        return 1024
-    def inc_div(self):
-        self.div = (self.div + 1) & 0xFF
-    def inc_timer(self) -> bool:
+        self.tima = 0
+        self.tma = 0
+
+        self.master_counter = 0
+        self.prev_signal = 0
+
+    def timer_tick(self):
         self.tima += 1
         if self.tima > 0xFF:
             self.tima = self.tma
             return True
         return False
-    
     def step(self, cycles) -> bool:
-        #Div: every 256 T cycles
-        total_t = self.cycles_t
-        total_d = self.cycles_d
-        cycles_for_t = self.get_timer_freq() 
         irq = False
         for c in range(cycles):
-            total_t += 1
-            total_d += 1
-            if (total_d % 256) == 0:
-                self.inc_div()
-                total_d = 0
-            if (total_t % cycles_for_t) == 0 and (self.tac & 0b100):
-                irq = True if self.inc_timer() else irq
-                total_t = 0
+            mc = (self.master_counter + 1) & 0xFFFF
+            self.div = (mc >> 8) & 0xFF
 
-        self.cycles_t = total_t
-        self.cycles_d = total_d
-        return irq
+            en = (self.tac >> 2) & 0b1
+            freq = (self.tac) & 0b11
+
+            bit_ind = BIT_INDEXES[freq]
+            bit = (self.master_counter >> bit_ind) & 0b1
+
+            if (not bit) and (self.prev_signal) and (en):
+                irq = True if self.timer_tick() else irq
+
+            self.prev_signal = bit
+
+        return irq            
+    def get_timer_freq(self):
+        match self.tac:
+            case 0:
+                return 1024
+            case 1:
+                return 16
+            case 2:
+                return 64
+            case 3:
+                return 256
+        
     
 class IO(MemoryRegion):
     def __init__(self, board:Motherboard, debug:bool=False) -> None:
@@ -114,8 +117,7 @@ class IO(MemoryRegion):
                         if val & 0x80 and not self.debug:
                             print(chr(self.buffer), end="", flush=True)
                     case 0x04:
-                        self.timer.div = 0
-                        self.timer.cycles_d = 0
+                        self.timer.master_counter = 0
                     case 0x05:
                         self.timer.tima = val
                     case 0x06:
