@@ -61,7 +61,7 @@ class PPU():
         pygame.init()
 
         self.fb = np.zeros((SCREEN_H, SCREEN_W, 3), dtype=np.uint8)
-        self.pg = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+        self.pg = pygame.display.set_mode((SCREEN_W, SCREEN_H), pygame.SCALED | pygame.RESIZABLE)
         self.oam = OAM()
         self.vram = VRAM()
 
