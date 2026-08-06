@@ -62,18 +62,19 @@ class Motherboard():
             pcmem = self.memory.read(pc, 4)
             ime = self.cpu.ime
             intf = self.io.intf
-            div = self.io.div
-            tima = self.io.tima
-            en = self.io.timer_enabled
+            div = self.io.timer.div
+            tima = self.io.timer.tima
+            en = self.io.timer.tac & 0b100
             halt_bug = self.cpu.halt_bug
             ime = self.cpu.ime
+            freq = self.io.timer.get_timer_freq()
             string = f"A:{self.hexformat(a)} F:{self.hexformat(f)} B:{self.hexformat(b)} C:{self.hexformat(c)} D:{self.hexformat(d)} E:{self.hexformat(e)} H:{self.hexformat(h)} L:{self.hexformat(l)} SP:{self.hexformat2b(sp)} PC:{self.hexformat2b(pc)} PCMEM:"
             for i,byte in enumerate(pcmem):
                 if i > 0:
                     string += f",{self.hexformat(byte)}"
                 else:
                     string += f"{self.hexformat(byte)}"
-            string += f"IME: {ime} HALT_BUG: {halt_bug}"
+            string += f"IME: {ime} HALT_BUG: {halt_bug} TIMA: {tima} DIV: {div} TIMER_EN: {en} TIMER_FREQ: {freq} t-cycles/t"
             print(string)
                     
         cycles = self.cpu.check_interrupt()

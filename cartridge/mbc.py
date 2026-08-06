@@ -43,12 +43,16 @@ class MBC1(MemoryRegion):
                 data.append(self.bank0[addr])
             else:
                 phy_addr = (self.bank * 0x4000) + (addr - 0x4000)
-                data.append(self.data[phy_addr])
+                if phy_addr < len(self.data):
+                    data.append(self.data[phy_addr])
+                else:
+                    print(f"OUT OF BOUNDS ROM READ: {hex(phy_addr)}, ROM SIZE: {hex(len(self.data))}")
+                    data.append(0x00)
 
         return data
     def write(self, offset: int, buffer: bytearray) -> None:
         if 0x2000 <= offset <= 0x3fff:
-            if buffer[0] == 0:
+            if (buffer[0] & 0x1F) == 0:
                 self.bank = 1
             else:
                 self.bank = buffer[0] & 0x1F
