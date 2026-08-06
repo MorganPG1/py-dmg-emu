@@ -84,7 +84,7 @@ class Motherboard():
         if irq:
             self.cpu.fire_interrupt(2)
 
-        irq = self.ppu.step(cycles)
+        irqs = self.ppu.step(cycles)
 
-        if irq != -1:
+        for irq in irqs:
             self.cpu.fire_interrupt(irq)

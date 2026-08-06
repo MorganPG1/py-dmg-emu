@@ -110,6 +110,8 @@ class IO(MemoryRegion):
                 self.hram[addr - 0x80] = val
             else:
                 match addr:
+                    case 0x00:
+                        ppu.joyp_select = val & 0x30
                     case 0x01:
                         self.buffer = val
                     case 0x02:
@@ -151,6 +153,8 @@ class IO(MemoryRegion):
                 buff.append(self.hram[addr - 0x80])
             elif addr != 0xFF:
                 match addr:
+                    case 0x00:
+                        buff.append(ppu.poll_joyp())
                     case 0x04:
                         buff.append(self.timer.div)
                     case 0x05:

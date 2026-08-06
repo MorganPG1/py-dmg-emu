@@ -34,6 +34,19 @@ PALETTE = (
     (169,169,169),
     (0,0,0),
 )
+KEYMAP_ACTION = {
+    pygame.K_z: 1,
+    pygame.K_x: 2,
+    pygame.K_RETURN: 4,
+    pygame.K_RSHIFT: 8,
+}
+
+KEYMAP_DIRECTION = {
+    pygame.K_RIGHT: 1,
+    pygame.K_LEFT: 2,
+    pygame.K_UP: 4,
+    pygame.K_DOWN: 8,
+}
 class VRAM(MemoryRegion):
     def __init__(self) -> None:
         self.b = bytearray(0x2000)
@@ -65,6 +78,7 @@ class PPU():
         self.oam = OAM()
         self.vram = VRAM()
 
+        self.joyp_select = 0x30
         self.lcdc = 0x80
         self.ly = 0
         self.lyc = 0
@@ -83,6 +97,29 @@ class PPU():
         #0 = 204 T-Cycles (again can vary but easier to fix)
         #1 = 4560 T-Cycles
         pass
+    def poll_joyp(self):
+        keys = pygame.key.get_pressed()
+        normal = 0
+        dir = 0
+        for k, bit in KEYMAP_ACTION.items():
+            if keys[k]:
+                normal |= bit
+
+        for k, bit in KEYMAP_DIRECTION.items():
+            if keys[k]:
+                dir |= bit
+
+        selected = (self.joyp_select >> 4) & 0b11
+        match selected:
+            case 0:
+                return (normal & dir) | (self.joyp_select & 0x30)
+            case 1:
+                return (normal) | (self.joyp_select & 0x30) 
+            case 2:
+                return (dir) | (self.joyp_select & 0x30)
+            case 3:
+                return (0xF) | (self.joyp_select & 0x30) 
+        return 0
     def scan(self, obj_size, obj_en):
         if not obj_en: return
 
@@ -180,7 +217,7 @@ class PPU():
                 self.fb[self.ly, scr_x] = PALETTE[pxl]
         pass
 
-    def step(self, cycles:int) -> int:
+    def step(self, cycles:int) -> list[int]:
         
         lcd_en = self.lcdc & 0x80
         window_en = self.lcdc & 0x20
@@ -189,7 +226,7 @@ class PPU():
         obj_size = self.lcdc & 0x4
         obj_en = self.lcdc & 0x2
         bg_en = self.lcdc & 0x1
-        irq = -1
+        irq = []
 
         #if window_en:
             #print("ROM enables window which is currently not implemented")
@@ -223,7 +260,7 @@ class PPU():
                                 self.mode = 2
                             else:
                                 self.mode = 1
-                                irq = 0
+                                irq.append(0)
                     case 1:
                         if self.cycles >= 456:
                             self.cycles = 0
@@ -241,8 +278,11 @@ class PPU():
 
                             events = pygame.event.get()
                             for event in events:
-                                if event == pygame.QUIT:
+                                if event.type == pygame.QUIT:
                                     exit()
+                                elif event.type == pygame.KEYDOWN:
+                                    if event.key in KEYMAP_ACTION or event.key in KEYMAP_DIRECTION:
+                                        irq.append(4)
                             self.fb.fill(0)
         else:
             self.cycles = 0
