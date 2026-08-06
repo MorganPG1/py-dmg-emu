@@ -126,7 +126,7 @@ class IO(MemoryRegion):
                     case 0x07:
                         self.timer.tac = val
                     case 0x0F:
-                        cpu.intf = val
+                        cpu.intf = val | 0xE0
                     case 0x40:
                         ppu.lcdc = val
                     case 0x41:
