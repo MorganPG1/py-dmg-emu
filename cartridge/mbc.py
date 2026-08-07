@@ -9,10 +9,13 @@ https://gbdev.io/pandocs/MBCs.html
 '''
 from memory.memory import MemoryRegion
 
-class BankedMBC(MemoryRegion):
+class MBC(MemoryRegion):
+    pass
+
+class BankedMBC(MBC):
     bank:int
 
-class UnbankedMBC(MemoryRegion):
+class UnbankedMBC(MBC):
     pass
 
 class MBC0(UnbankedMBC):

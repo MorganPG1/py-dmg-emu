@@ -32,5 +32,5 @@ class Cart():
             self.mbc = MBC1(self.rom)
             #raise NotImplementedError(f"MBC ({hex(mbc)}) unknown or not implemented. Load a different ROM and try again")
 
-    def getMBC(self) -> BankedMBC|UnbankedMBC:
+    def getMBC(self) -> MBC:
         return self.mbc

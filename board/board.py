@@ -16,7 +16,7 @@ from board.io import IO
 from board.ppu import PPU
 from os.path import exists
 from debug.symbols import SymbolParser
-from cartridge.mbc import UnbankedMBC, BankedMBC
+from cartridge.mbc import UnbankedMBC, BankedMBC, MBC
 class Motherboard():
     def __init__(self, romfile:str, debug_symbols:str="") -> None:
         self.pc_last = 0
@@ -29,7 +29,7 @@ class Motherboard():
         self.ppu = PPU()
 
         self.cart = Cart(romfile)
-        self.mbc:BankedMBC|UnbankedMBC = self.cart.getMBC()
+        self.mbc:MBC = self.cart.getMBC()
         ram = RAM(0x2000)
         vram = self.ppu.vram
         eram = RAM(0x2000)
@@ -98,7 +98,7 @@ class Motherboard():
             pc = self.cpu.pc.get()
             if self.pc_last != pc:
                 if self.syms:
-                    bank = 0 if (pc < 0x4000) or (isinstance(self.mbc, UnbankedMBC)) else self.mbc.bank
+                    bank = self.mbc.bank if (pc >= 0x4000) and (isinstance(self.mbc, BankedMBC)) else 0
                     if not self.syms.is_same_symbol(bank, pc, self.pc_last):
                         print(f"EXCECUTION CHANGED TO: {pc:04X} ({self.syms.get_symbol(bank, pc)})")
                 else:
