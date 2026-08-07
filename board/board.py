@@ -52,6 +52,10 @@ class Motherboard():
         if irq:
             self.cpu.fire_interrupt(2)
 
+        irqs = self.ppu.step(cycles)
+        for irq in irqs:
+            self.cpu.fire_interrupt(irq)
+
     def mainloop(self):
         if self.debug:
             a = self.cpu.registers["A"].get()
@@ -92,7 +96,3 @@ class Motherboard():
         self.stepIo(c)
 
         cycles += c
-        irqs = self.ppu.step(cycles)
-
-        for irq in irqs:
-            self.cpu.fire_interrupt(irq)

@@ -46,7 +46,6 @@ class MBC1(MemoryRegion):
                 if phy_addr < len(self.data):
                     data.append(self.data[phy_addr])
                 else:
-                    print(f"OUT OF BOUNDS ROM READ: {hex(phy_addr)}, ROM SIZE: {hex(len(self.data))}")
                     data.append(0x00)
 
         return data

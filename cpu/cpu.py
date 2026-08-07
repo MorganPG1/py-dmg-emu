@@ -1346,9 +1346,11 @@ class CPU():
                 self.handle_rst(opcode, flags='----', cycles=[16])
 
     def fetch(self) -> int:
-        i = self.read_next(1, self.halt_bug)[0]
-        if self.halt_bug: self.halt_bug = False
-        return i
+        if not self.halted:
+            i = self.read_next(1, self.halt_bug)[0]
+            if self.halt_bug: self.halt_bug = False
+            return i
+        return 0
     def execute(self, instr:int) -> int:
         if not self.halted:
             cycles_before = self.cycles
