@@ -2,4 +2,6 @@
 */__pycache__
 *.gb
 *prof
+*.gbc
+*.sav
 log.txt

@@ -110,16 +110,19 @@ class PPU():
                 dir |= bit
 
         selected = (self.joyp_select >> 4) & 0b11
+
+        low = 0
+        high = (self.joyp_select & 0x30)
         match selected:
             case 0:
-                return (normal & dir) | (self.joyp_select & 0x30)
+                low = (normal & dir) 
             case 1:
-                return (normal) | (self.joyp_select & 0x30) 
+                low = (normal) 
             case 2:
-                return (dir) | (self.joyp_select & 0x30)
+                low = (dir)
             case 3:
-                return (0xF) | (self.joyp_select & 0x30) 
-        return 0
+                low = (0xF)
+        return ((~low) | high) & 0xFF
     def scan(self, obj_size, obj_en):
         if not obj_en: return
 
