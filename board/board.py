@@ -14,22 +14,30 @@ from cartridge.cart import Cart
 from time import sleep
 from board.io import IO
 from board.ppu import PPU
+from os.path import exists
+from debug.symbols import SymbolParser
+from cartridge.mbc import UnbankedMBC, BankedMBC
 class Motherboard():
-    def __init__(self, romfile:str, debug:bool=False) -> None:
+    def __init__(self, romfile:str, debug_symbols:str="") -> None:
         self.pc_last = 0
         self.cycles = 0
-        self.debug = debug
+        self.debug = False
+        self.syms = None
+        if debug_symbols != "":
+            self.debug = True
+            self.syms = SymbolParser(debug_symbols)
         self.ppu = PPU()
 
-        cart = Cart(romfile)
+        self.cart = Cart(romfile)
+        self.mbc:BankedMBC|UnbankedMBC = self.cart.getMBC()
         ram = RAM(0x2000)
         vram = self.ppu.vram
         eram = RAM(0x2000)
         oam = self.ppu.oam
-        self.io = IO(self, debug)
+        self.io = IO(self, self.debug)
         
         memory_map:dict[tuple[int,int], MemoryRegion] = {
-            (0x0000, 0x8000): cart.getMBC(),
+            (0x0000, 0x8000): self.mbc,
             (0x8000, 0xA000): vram,
             (0xA000, 0xC000): eram,
             (0xC000, 0xE000): ram,
@@ -58,6 +66,7 @@ class Motherboard():
 
     def mainloop(self):
         if self.debug:
+            '''
             a = self.cpu.registers["A"].get()
             f = self.cpu.flags.get()
             b = self.cpu.registers["B"].get()
@@ -85,7 +94,16 @@ class Motherboard():
                     string += f"{self.hexformat(byte)}"
             string += f"IME: {ime} HALT_BUG: {halt_bug} TIMA: {tima} DIV: {div} TIMER_EN: {en} TIMER_FREQ: {freq} t-cycles/t"
             print(string)
-                    
+            '''
+            pc = self.cpu.pc.get()
+            if self.pc_last != pc:
+                if self.syms:
+                    bank = 0 if (pc < 0x4000) or (isinstance(self.mbc, UnbankedMBC)) else self.mbc.bank
+                    if not self.syms.is_same_symbol(bank, pc, self.pc_last):
+                        print(f"EXCECUTION CHANGED TO: {pc:04X} ({self.syms.get_symbol(bank, pc)})")
+                else:
+                    print(f"PC CHANGED TO: {pc:04X}")
+            self.pc_last = pc
         cycles = self.cpu.check_interrupt()
         instr = self.cpu.fetch()
 

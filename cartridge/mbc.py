@@ -9,7 +9,13 @@ https://gbdev.io/pandocs/MBCs.html
 '''
 from memory.memory import MemoryRegion
 
-class MBC0(MemoryRegion):
+class BankedMBC(MemoryRegion):
+    bank:int
+
+class UnbankedMBC(MemoryRegion):
+    pass
+
+class MBC0(UnbankedMBC):
     '''
     No MBC, raw connection to unbanked rom between 0x0000 and 0x7FFF
     '''
@@ -23,7 +29,7 @@ class MBC0(MemoryRegion):
         #raise Exception(f"WRITE TO ROM AT {hex(offset)}")
         return
 
-class MBC1(MemoryRegion):
+class MBC1(BankedMBC):
     '''
     2MB of banked ROM
     '''
@@ -51,7 +57,7 @@ class MBC1(MemoryRegion):
         return data
     def write(self, offset: int, buffer: bytearray) -> None:
         if 0x2000 <= offset <= 0x3fff:
-            if (buffer[0] & 0x1F) == 0:
+            if (buffer[0]) == 0:
                 self.bank = 1
             else:
-                self.bank = buffer[0] & 0x1F
+                self.bank = buffer[0]
