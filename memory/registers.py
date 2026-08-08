@@ -24,7 +24,7 @@ class Register():
         :return: The value stored in the register
         :rtype: int
         '''
-        pass
+        ...
 
     def set(self, value:int):
         '''
@@ -34,7 +34,7 @@ class Register():
         :param value: The value to store in the register
         :type value: int
         '''
-        pass
+        ...
 
     def inc(self) -> bool:
         '''
@@ -44,7 +44,7 @@ class Register():
         :return: True if an overflow happened, False otherwise
         :rtype: bool
         '''
-        pass
+        ...
 
     def dec(self) -> bool:
         '''
@@ -54,7 +54,7 @@ class Register():
         :return: True if an underflow happened, False otherwise
         :rtype: bool
         '''
-        pass
+        ...
 
     def geti(self) -> int:
         '''
@@ -174,7 +174,7 @@ class FlagRegister(Register8b):
         else:
             self.val &= ~(1 << 4)
     def set_znhc(self, z:int, n:int, h:int, c:int):
-        self.val = (z << 7) | (n << 6) | (h << 5) | (c << 4)
+        self.val = (z << 7) | (n << 6) | (h << 5) | (c << 4) # pyright: ignore[reportIncompatibleVariableOverride]
 class Register16b(Register):
     '''
     A 16 bit register

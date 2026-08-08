@@ -27,7 +27,7 @@ class MemoryRegion():
         :return: The data read from the MemoryRegion
         :rtype: bytearray
         '''
-        pass
+        ...
 
     def write(self, offset:int, buffer:bytearray) -> None:
         '''
@@ -39,7 +39,7 @@ class MemoryRegion():
         :type offset: int
         :type buffer: bytearray
         '''
-        pass
+        ...
 
 class MemoryController():
     '''

@@ -13,7 +13,7 @@ class Conditional():
         :type flags: FlagRegister
         '''
         self.flags = flags
-        pass
+        ...
 
     def evaluate(self) -> bool:
         '''
@@ -23,7 +23,7 @@ class Conditional():
         :return: The state of the condition
         :rtype: bool
         '''
-        pass
+        ...
 
 class NZ(Conditional):
     '''
