@@ -85,13 +85,15 @@ class PPU():
         self.vram = VRAM()
 
         self.joyp_select = 0x30
-        self.lcdc = 0x80
+        self.lcdc = 0x00
         self.ly = 0
         self.lyc = 0
         self.stat = 0
         self.cycles = 0
         self.scx = 0
         self.scy = 0
+        self.wy = 0
+        self.wx = 0
         self.mode = -1 #-1 = disabled, 2 = search for OBJ, 3 = send pixels, 0 = wait for scanline, 1 = wait for frame
         self.objs_on_line = []
         self.mode2_handler_run= False
@@ -164,12 +166,15 @@ class PPU():
         pxl = (bit1 << 1) | bit0
         return pxl
 
-    def render_scanline(self, bg_en, bg_tile_map_area, bg_data_area):
+    def render_scanline(self, bg_en, bg_tile_map_area, data_area, window_en, window_tile_map_area):
         tm = 0x1C00 if bg_tile_map_area else 0x1800
+        window_tm = 0x1C00 if window_tile_map_area else 0x1800
         line = self.fb[self.ly]
         vram_data = self.vram.read(0, 0x2000, True)        
         bg_y = (self.ly + self.scy) & 0xFF
+        wind_y = (self.ly - self.wy) & 0xFF
         row = bg_y % 8
+        wrow = wind_y % 8
         for i in range(160):
             if bg_en:
                 bg_x = (i + self.scx) & 0xFF
@@ -177,7 +182,7 @@ class PPU():
                 offset = tm + ((bg_y // 8) * 32) + (bg_x // 8) 
                 ind = vram_data[offset]
 
-                if bg_data_area:
+                if data_area:
                     tile_addr = ind * 16
                 else:
                     if ind > 127 : ind -= 256
@@ -198,7 +203,29 @@ class PPU():
             else:
                 line[i] = PALETTE[0]
 
-        
+            if window_en and bg_en and (i >= self.wx-7) and (self.ly >= self.wy):
+                wind_x = (i - (self.wx-7)) & 0xFF
+                offset = window_tm + ((wind_y // 8) * 32) + (wind_x // 8) 
+                ind = vram_data[offset]
+
+                if data_area:
+                    tile_addr = ind * 16
+                else:
+                    if ind > 127 : ind -= 256
+                    tile_addr = 0x1000 + (ind * 16)
+
+                column = wind_x % 8
+
+                b1 = vram_data[tile_addr + (wrow * 2)]
+                b2 = vram_data[tile_addr + (wrow * 2) + 1]
+
+                bitpos = 7 - column
+
+                bit0 = (b1 >> bitpos) & 0x01
+                bit1 = (b2 >> bitpos) & 0x01
+
+                pxl = (bit1 << 1) | bit0
+                line[i] = PALETTE[pxl]
         for obj in self.objs_on_line:
             x = obj[1]-8
 
@@ -206,7 +233,7 @@ class PPU():
             ind = obj[3] * 16            
             attr = obj[4]
             bank = attr & 0b1000
-            priority = attr & 0b1000000
+            priority = attr & 0b10000000
             x_flip = attr & 0b100000
 
             if bank: ind += 0x400
@@ -218,17 +245,21 @@ class PPU():
                 if scr_x < 0 or scr_x >= 160:
                     continue
 
-                pxl = self.get_pixel_2bpp(vram_data, ind, row, tx, x_flip)
+                if not priority or not (self.fb[self.ly,scr_x].all() == 255):
+                    pxl = self.get_pixel_2bpp(vram_data, ind, row, tx, x_flip)
+                    if pxl == 0:
+                        continue
+                    self.fb[self.ly, scr_x] = PALETTE[pxl]
+                                
+                
                 #print(ind, row, column)
-                if pxl == 0:
-                    continue
-
-                self.fb[self.ly, scr_x] = PALETTE[pxl]
+                
         pass
 
     def step(self, cycles:int) -> list[int]:
         
         lcd_en = self.lcdc & 0x80
+        window_tile_map_area = self.lcdc & 0x40
         window_en = self.lcdc & 0x20
         bg_data_area = self.lcdc & 0x10
         bg_tile_map_area = self.lcdc & 0x8
@@ -255,7 +286,7 @@ class PPU():
                             self.mode2_handler_run = False
                     case 3:
                         if not self.mode3_handler_run:
-                            self.render_scanline(bg_en, bg_tile_map_area, bg_data_area)
+                            self.render_scanline(bg_en, bg_tile_map_area, bg_data_area, window_en, window_tile_map_area)
                             self.mode3_handler_run = True
                         if self.cycles >= 172:
                             self.cycles = 0
@@ -294,7 +325,12 @@ class PPU():
                                         irq.append(4)
                             self.fb.fill(0)
         else:
+            if self.mode != -1:
+                self.fb.fill(255)
+                surface_array = np.transpose(self.fb, (1, 0, 2))
+                pygame.surfarray.blit_array(self.pg, surface_array)
             self.cycles = 0
             self.ly = 0
             self.mode = -1
+            
         return irq

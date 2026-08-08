@@ -157,6 +157,10 @@ class IO(MemoryRegion):
                         addr = (val << 8) & 0xDF00
                         data = self.board.memory.read(addr, 0xA0)
                         self.board.ppu.oam.write(0, data, True)
+                    case 0x4A:
+                        ppu.wy = val
+                    case 0x4B:
+                        ppu.wx = val
                     case 0xFF:
                         cpu.ie = val
 
@@ -189,6 +193,10 @@ class IO(MemoryRegion):
                         buff.append(ppu.ly)
                     case 0x45:
                         buff.append(ppu.lyc)
+                    case 0x4A:
+                        buff.append(ppu.wy)
+                    case 0x4B:
+                        buff.append(ppu.wx)
                     case _:
                         buff.append(self.read_buff[addr])
             else:
