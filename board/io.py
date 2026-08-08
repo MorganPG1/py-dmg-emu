@@ -65,6 +65,11 @@ class IO(MemoryRegion):
         self.debug = debug
         self.timer = Timer()
         self.buffer = 0
+
+        #Before someone gets mad, yes this bytearray is AI generated
+        #I feel it is a fair use of AI because it is just a bytearray that stores placeholders for IO registers
+        #But oh well someone will probably use this to say the entire project is AI
+        #(trust me not even ai can write code as bad as half of this project i really need to clean it up)
         self.read_buff = bytearray([
             # $FF00 - $FF0F: System & Timers
             0xCF, 0x00, 0x7E, 0xFF, 0xAB, 0x00, 0x00, 0xF8,
