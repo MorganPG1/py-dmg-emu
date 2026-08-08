@@ -1,6 +1,12 @@
 # py-dmg-emu
 A gameboy emulator written in python. As expected, very slow, but nowhere near as slow as I was expecting. This (like my previous PC emulator) is not meant to be accurate, nor a product you should use. It is currently unfinished, will it ever be finished? Probably not, but in it's current state you can play tetris and get to the overworld in pokemon red so i consider that a success.
 
+## Screenshots
+<img width="956" height="916" alt="image" src="https://github.com/user-attachments/assets/506565cf-77c9-40e6-912b-db0070210338" />
+(ignore my horrible tetris gameplay)
+
+<img width="956" height="916" alt="image" src="https://github.com/user-attachments/assets/26f7e43c-de47-4af7-92f6-68bf022374e8" />
+
 ## What needs working on
  - PPU emulation, currently works kinda but a lot of features are incomplete or not implemented
  - Optimisations, particularly in PPU because that is the slowest aspect.
