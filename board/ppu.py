@@ -22,10 +22,13 @@ https://gbdev.io/pandocs/pixel_fifo.html
 # 05/08/26 20:36: i have not mentally prepared myself for this but procrastination is never going to help
 # here we go i guess, worst case scenario i have to delete it all and restart like with the interrupts
 
+# Imports 
 from memory.memory import MemoryRegion
 import numpy as np
 import time
 import pygame
+
+# Constants
 SCREEN_W = 160
 SCREEN_H = 144
 PALETTE = (
@@ -47,6 +50,8 @@ KEYMAP_DIRECTION = {
     pygame.K_UP: 4,
     pygame.K_DOWN: 8,
 }
+
+
 class VRAM(MemoryRegion):
     def __init__(self) -> None:
         self.b = bytearray(0x2000)
@@ -69,6 +74,7 @@ class OAM(MemoryRegion):
     def write(self, offset: int, buffer: bytearray, is_ppu:bool=False) -> None:
         #TODO: implement OAM inaccessibility
         self.b[offset:offset+len(buffer)] = buffer
+
 class PPU():
     def __init__(self) -> None:
         pygame.init()
@@ -97,7 +103,7 @@ class PPU():
         #0 = 204 T-Cycles (again can vary but easier to fix)
         #1 = 4560 T-Cycles
         pass
-    def poll_joyp(self):
+    def poll_joyp(self): #yes joypad is implemented inside PPU, its the easiest way to do it even though it looks a bit stupid
         keys = pygame.key.get_pressed()
         normal = 0
         dir = 0
