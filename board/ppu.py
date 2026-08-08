@@ -227,18 +227,21 @@ class PPU():
                 pxl = (bit1 << 1) | bit0
                 line[i] = PALETTE[pxl]
         for obj in self.objs_on_line:
+            is_16px = obj[0]
             x = obj[1]-8
-
             y = obj[2]-16
             ind = obj[3] * 16            
             attr = obj[4]
             bank = attr & 0b1000
             priority = attr & 0b10000000
             x_flip = attr & 0b100000
-
+            y_flip = attr & 0b1000000
+            h = 16 if is_16px else 8
             if bank: ind += 0x400
             row = self.ly-y
 
+            if y_flip: row = (h - 1) - row
+            
             for tx in range(8):
                 scr_x = x + tx
 
