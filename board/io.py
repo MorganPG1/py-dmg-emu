@@ -1,3 +1,14 @@
+'''
+DMG Gameboy Emulator Project - MorganPG
+
+board/io.py
+
+I/O memory space, Timer and HRAM emulation
+See: 
+https://gbdev.io/pandocs/Timer_and_Divider_Registers.html
+https://gbdev.io/pandocs/Hardware_Reg_List.html
+https://gbdev.io/pandocs/Memory_Map.html#io-ranges
+'''
 from __future__ import annotations
 from memory.memory import MemoryRegion
 from typing import TYPE_CHECKING

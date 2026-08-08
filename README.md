@@ -9,6 +9,8 @@ A gameboy emulator written in python. As expected, very slow, but nowhere near a
 ## What is not currently implemented
  - APU, no audio support at all, i'm not sure if i will ever implement this because it seems like it will slow down an already very slow codebase
  - LCD STAT interrupt
+ - A bunch of accuracy related things like VRAM and OAM inaccessibility, these wont be too hard to implement but I'd rather get the main stuff working first
+ 
 ## How do i use this
 If you want to test out this emulator the only dependencies are pygame and numpy, install them and you should be good to go.
 The arguments are:
