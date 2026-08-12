@@ -27,7 +27,6 @@ class Timer():
         self.tima = 0
         self.div = 0
         self.tac = 0
-        self.tima = 0
         self.tma = 0
 
         self.master_counter = 0
