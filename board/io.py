@@ -57,16 +57,6 @@ class Timer():
             self.master_counter = mc
 
         return irq            
-    def get_timer_freq(self):
-        match (self.tac & 0b11):
-            case 0:
-                return 1024
-            case 1:
-                return 16
-            case 2:
-                return 64
-            case 3:
-                return 256
         
     
 class IO(MemoryRegion):
