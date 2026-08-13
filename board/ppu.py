@@ -96,8 +96,6 @@ class PPU():
         self.wx = 0
         self.mode = -1 #-1 = disabled, 2 = search for OBJ, 3 = send pixels, 0 = wait for scanline, 1 = wait for frame
         self.objs_on_line = []
-        self.mode2_handler_run= False
-        self.mode3_handler_run= False
         self.frame_rendered = False
         self.last_vblank = 0
         #2 = 80 T-Cycles 
@@ -279,22 +277,18 @@ class PPU():
                 self.cycles += 1
                 match self.mode:
                     case 2:
-                        if not self.mode2_handler_run:
+                        if self.cycles == 1:
                             self.objs_on_line = []
                             self.scan(obj_size, obj_en)
-                            self.mode2_handler_run = True
                         if self.cycles >= 80:
                             self.cycles = 0
                             self.mode = 3
-                            self.mode2_handler_run = False
                     case 3:
-                        if not self.mode3_handler_run:
+                        if self.cycles == 1:
                             self.render_scanline(bg_en, bg_tile_map_area, bg_data_area, window_en, window_tile_map_area)
-                            self.mode3_handler_run = True
                         if self.cycles >= 172:
                             self.cycles = 0
                             self.mode = 0
-                            self.mode3_handler_run = False
                     case 0:
                         if self.cycles >= 204:
                             self.cycles = 0
